@@ -36,7 +36,7 @@ export default function Select<T extends string | number>({
   const menuRef = useRef<HTMLUListElement>(null);
   const listboxId = useId();
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = (options ?? []).find((option) => option.value === value);
 
   const updateMenuPosition = () => {
     const trigger = triggerRef.current;
@@ -119,7 +119,7 @@ export default function Select<T extends string | number>({
             }}
             className="fixed z-70 overflow-y-auto rounded-2xl border border-gray-200 bg-white py-2 shadow-[0_8px_24px_0_rgba(0,0,0,0.12)]"
           >
-            {options.map((option) => {
+            {(options ?? []).map((option) => {
               const isSelected = option.value === value;
 
               return (

@@ -12,8 +12,9 @@ import type {
 
 export const login = async (payload: PortalLoginRequest) => {
   const res = await apiClient.client.post<PortalLoginResponse>(
-    "/portal/login",
+    "/api/proxy/portal/login",
     payload,
+    { baseURL: "", skipErrorAlert: true },
   );
   setToken(res.data.token);
   return res.data;

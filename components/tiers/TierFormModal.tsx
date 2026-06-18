@@ -3,10 +3,23 @@
 import {
   buildTierUpdatePayload,
   createTier,
+  getTierRewards,
+  rewardInputsEqual,
+  rewardsToInputs,
   updateTier,
+  updateTierRewards,
   type CreateTierRequest,
   type PortalTier,
 } from "@/services/tiers/tiers";
+import { getCoupons } from "@/services/coupons/coupons";
+import type { PortalCoupon } from "@/services/coupons/types";
+import { getCurrencies } from "@/services/currencies/currencies";
+import type { PortalCurrency } from "@/services/currencies/types";
+import TierRewardsEditor, {
+  formItemsToRewardInputs,
+  rewardsToFormItems,
+  type RewardFormItem,
+} from "@/components/tiers/TierRewardsEditor";
 import Select from "@/components/util/Select";
 import { handleError } from "@/utils/errors";
 import { useEffect, useMemo, useState } from "react";
@@ -61,8 +74,51 @@ export default function TierFormModal({
   const [form, setForm] = useState<TierFormState>(
     tier ? toFormState(tier) : emptyForm,
   );
+  const [rewardItems, setRewardItems] = useState<RewardFormItem[]>([]);
+  const [initialRewardInputs, setInitialRewardInputs] = useState(
+    rewardsToInputs(tier?.rewards ?? []),
+  );
+  const [currencies, setCurrencies] = useState<PortalCurrency[]>([]);
+  const [coupons, setCoupons] = useState<PortalCoupon[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void Promise.all([getCurrencies(), getCoupons()])
+      .then(([currencyData, couponData]) => {
+        setCurrencies(currencyData);
+        setCoupons(couponData);
+      })
+      .catch(() => {
+        setCurrencies([]);
+        setCoupons([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    const loadRewards = async () => {
+      if (!tier) {
+        setRewardItems([]);
+        setInitialRewardInputs([]);
+        return;
+      }
+
+      try {
+        const rewards =
+          tier.rewards && tier.rewards.length > 0
+            ? tier.rewards
+            : await getTierRewards(tier.id);
+        const inputs = rewardsToInputs(rewards);
+        setInitialRewardInputs(inputs);
+        setRewardItems(rewardsToFormItems(inputs));
+      } catch {
+        setInitialRewardInputs([]);
+        setRewardItems([]);
+      }
+    };
+
+    void loadRewards();
+  }, [tier]);
 
   const showInUiOptions = useMemo(
     () => [
@@ -72,10 +128,15 @@ export default function TierFormModal({
     [],
   );
 
+  const currentRewardInputs = useMemo(
+    () => formItemsToRewardInputs(rewardItems),
+    [rewardItems],
+  );
+
   const hasChanges = useMemo(() => {
     if (!tier) return true;
 
-    const payload: CreateTierRequest = {
+    const payload: Omit<CreateTierRequest, "rewards"> = {
       name: form.name.trim(),
       code: form.code.trim(),
       min_spending: Number(form.minSpending),
@@ -85,28 +146,30 @@ export default function TierFormModal({
       is_show_in_ui: form.isShowInUi,
     };
 
-    return Object.keys(buildTierUpdatePayload(tier, payload)).length > 0;
-  }, [form, tier]);
+    const tierChanged =
+      Object.keys(buildTierUpdatePayload(tier, payload)).length > 0;
+    const rewardsChanged = !rewardInputsEqual(
+      initialRewardInputs,
+      currentRewardInputs,
+    );
+
+    return tierChanged || rewardsChanged;
+  }, [currentRewardInputs, form, initialRewardInputs, tier]);
 
   const isSaveDisabled = isSubmitting || (isEdit && !hasChanges);
 
   const closeModal = () => {
     setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, MODAL_EXIT_MS);
+    setTimeout(() => onClose(), MODAL_EXIT_MS);
   };
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isSubmitting) {
-        closeModal();
-      }
+      if (event.key === "Escape" && !isSubmitting) closeModal();
     };
 
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleEscape);
-
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleEscape);
@@ -120,6 +183,20 @@ export default function TierFormModal({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const validateRewards = () => {
+    for (const reward of rewardItems) {
+      if (reward.rewardType === "point") {
+        const value = Number(reward.pointValue);
+        if (!reward.pointCurrencyId || Number.isNaN(value) || value <= 0) {
+          return "กรุณาระบุ point และสกุลให้ถูกต้องในรางวัล";
+        }
+      } else if (!reward.couponId) {
+        return "กรุณาเลือกคูปองในรางวัล";
+      }
+    }
+    return null;
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -129,7 +206,7 @@ export default function TierFormModal({
       return;
     }
 
-    const payload: CreateTierRequest = {
+    const payload: Omit<CreateTierRequest, "rewards"> = {
       name: form.name.trim(),
       code: form.code.trim(),
       min_spending: Number(form.minSpending),
@@ -153,13 +230,29 @@ export default function TierFormModal({
       return;
     }
 
+    const rewardError = validateRewards();
+    if (rewardError) {
+      setError(rewardError);
+      return;
+    }
+
+    const rewardPayload = currentRewardInputs;
+
     setIsSubmitting(true);
     try {
       if (isEdit && tier) {
         const updatePayload = buildTierUpdatePayload(tier, payload);
-        await updateTier(tier.id, updatePayload);
+        if (Object.keys(updatePayload).length > 0) {
+          await updateTier(tier.id, updatePayload);
+        }
+        if (!rewardInputsEqual(initialRewardInputs, rewardPayload)) {
+          await updateTierRewards(tier.id, rewardPayload);
+        }
       } else {
-        await createTier(payload);
+        await createTier({
+          ...payload,
+          rewards: rewardPayload.length > 0 ? rewardPayload : undefined,
+        });
       }
       onSuccess();
       closeModal();
@@ -184,7 +277,7 @@ export default function TierFormModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="tier-form-title"
-        className={`max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-4xl bg-white p-6 shadow-[0_4px_10px_0_rgba(0,0,0,0.1)] ${
+        className={`max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-4xl bg-white p-6 shadow-[0_4px_10px_0_rgba(0,0,0,0.1)] ${
           isClosing
             ? "opacity-0 scale-95 translate-y-2 transition-all duration-250 ease-in"
             : "animate-dialog-pop-in"
@@ -198,93 +291,113 @@ export default function TierFormModal({
           {isEdit ? "แก้ไขระดับสมาชิก" : "เพิ่มระดับสมาชิก"}
         </h2>
         <p className="mt-1 text-sm text-gray-100">
-          กำหนดเงื่อนไขยอดใช้จ่ายและอัตราแปลง point
+          กำหนดเงื่อนไขยอดใช้จ่าย อัตราแปลง point และรางวัลเมื่อเลื่อน Tier
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="ชื่อระดับ">
-              <input
-                value={form.name}
-                onChange={(event) => updateField("name", event.target.value)}
-                placeholder="เช่น Gold"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-              />
-            </Field>
-
-            <Field label="รหัสระดับ">
-              <input
-                value={form.code}
-                onChange={(event) => updateField("code", event.target.value)}
-                placeholder="เช่น gold"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-              />
-            </Field>
-
-            <Field label="ยอดใช้จ่ายขั้นต่ำ">
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={form.minSpending}
-                onChange={(event) =>
-                  updateField("minSpending", event.target.value)
-                }
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-              />
-            </Field>
-
-            <Field label="ยอดใช้จ่ายสูงสุด">
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={form.maxSpending}
-                onChange={(event) =>
-                  updateField("maxSpending", event.target.value)
-                }
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-              />
-            </Field>
-
-            <Field label="อัตราแปลง Point">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.convertPoints}
-                onChange={(event) =>
-                  updateField("convertPoints", event.target.value)
-                }
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-              />
-            </Field>
-
-            <Field label="สี">
-              <div className="flex items-center gap-3">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-5">
+          <Section title="ข้อมูลระดับ">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="ชื่อระดับ">
                 <input
-                  type="color"
-                  value={form.color}
-                  onChange={(event) => updateField("color", event.target.value)}
-                  className="size-11 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
+                  value={form.name}
+                  onChange={(event) => updateField("name", event.target.value)}
+                  placeholder="เช่น Gold"
+                  className={inputClassName}
                 />
-                <input
-                  value={form.color}
-                  onChange={(event) => updateField("color", event.target.value)}
-                  placeholder="#FFD700"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100"
-                />
-              </div>
-            </Field>
+              </Field>
 
-            <Field label="การแสดงผล">
-              <Select
-                value={form.isShowInUi ? "true" : "false"}
-                options={showInUiOptions}
-                onChange={(value) => updateField("isShowInUi", value === "true")}
-              />
-            </Field>
-          </div>
+              <Field label="รหัสระดับ">
+                <input
+                  value={form.code}
+                  onChange={(event) => updateField("code", event.target.value)}
+                  placeholder="เช่น gold"
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field label="ยอดใช้จ่ายขั้นต่ำ">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.minSpending}
+                  onChange={(event) =>
+                    updateField("minSpending", event.target.value)
+                  }
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field label="ยอดใช้จ่ายสูงสุด">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.maxSpending}
+                  onChange={(event) =>
+                    updateField("maxSpending", event.target.value)
+                  }
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field label="อัตราแปลง Point">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.convertPoints}
+                  onChange={(event) =>
+                    updateField("convertPoints", event.target.value)
+                  }
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field label="สี">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={form.color}
+                    onChange={(event) =>
+                      updateField("color", event.target.value)
+                    }
+                    className="size-11 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
+                  />
+                  <input
+                    value={form.color}
+                    onChange={(event) =>
+                      updateField("color", event.target.value)
+                    }
+                    placeholder="#FFD700"
+                    className={inputClassName}
+                  />
+                </div>
+              </Field>
+
+              <Field label="การแสดงผล">
+                <Select
+                  value={form.isShowInUi ? "true" : "false"}
+                  options={showInUiOptions}
+                  onChange={(value) =>
+                    updateField("isShowInUi", value === "true")
+                  }
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="รางวัลเมื่อเข้า Tier">
+            <p className="mb-4 text-sm text-gray-100">
+              สมาชิกจะได้รับรางวัลเหล่านี้เมื่อเลื่อนขึ้นมาถึงระดับนี้
+            </p>
+            <TierRewardsEditor
+              rewards={rewardItems}
+              currencies={currencies}
+              coupons={coupons}
+              onChange={setRewardItems}
+            />
+          </Section>
 
           {error ? <p className="text-sm text-red-100">{error}</p> : null}
 
@@ -308,6 +421,24 @@ export default function TierFormModal({
         </form>
       </div>
     </div>
+  );
+}
+
+const inputClassName =
+  "w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brown-100";
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-gray-200 p-4 md:p-5">
+      <h3 className="mb-4 text-sm font-semibold text-defualt-text">{title}</h3>
+      {children}
+    </section>
   );
 }
 

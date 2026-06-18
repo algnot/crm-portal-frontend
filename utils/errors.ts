@@ -17,6 +17,8 @@ const isAppError = (error: unknown): error is AppError => {
   return typeof candidate.message === "string" && "raw" in candidate;
 };
 
+const isHtmlResponse = (value: string) => /^\s*<(!doctype|html)/i.test(value);
+
 export function handleError(error: unknown): AppError {
   if (isAppError(error)) {
     return error;
@@ -28,7 +30,9 @@ export function handleError(error: unknown): AppError {
 
     const serverMessage =
       typeof body === "string"
-        ? body
+        ? isHtmlResponse(body)
+          ? undefined
+          : body
         : ((body?.message as string | undefined) ??
           (body?.error as string | undefined));
 
@@ -38,7 +42,9 @@ export function handleError(error: unknown): AppError {
         ? "Request timed out. Please try again."
         : !error.response
           ? "Network error. Please check your connection."
-          : `Request failed with status ${status}.`);
+          : status && status >= 500
+            ? "เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้ง"
+            : `Request failed with status ${status}.`);
 
     return { message, status, raw: error };
   }

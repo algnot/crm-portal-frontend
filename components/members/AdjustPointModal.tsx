@@ -2,6 +2,8 @@
 
 import { adjustUserPoint } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
+import { getCurrencies } from "@/services/currencies/currencies";
+import type { PortalCurrency } from "@/services/currencies/types";
 import Select from "@/components/util/Select";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
@@ -21,15 +23,20 @@ export default function AdjustPointModal({
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [currencies, setCurrencies] = useState<PortalCurrency[]>([]);
 
-  const pointCurrencies = user.points;
-  const defaultCurrency =
-    pointCurrencies.find((point) => point.currency.is_default) ??
-    pointCurrencies[0];
-
-  const [currencyId, setCurrencyId] = useState(
-    defaultCurrency?.currency.id ?? 0,
+  const balanceByCurrencyId = useMemo(
+    () =>
+      new Map(
+        user.points.map((point) => [point.currency.id, point.balance]),
+      ),
+    [user.points],
   );
+
+  const defaultCurrency =
+    currencies.find((currency) => currency.is_default) ?? currencies[0];
+
+  const [currencyId, setCurrencyId] = useState(0);
   const [type, setType] = useState<"earn" | "spend">("earn");
   const [value, setValue] = useState("");
   const [note, setNote] = useState("");
@@ -38,11 +45,19 @@ export default function AdjustPointModal({
 
   const currencyOptions = useMemo(
     () =>
-      pointCurrencies.map((point) => ({
-        value: point.currency.id,
-        label: `${point.currency.name} (คงเหลือ ${formatNumber(point.balance)})`,
-      })),
-    [pointCurrencies],
+      currencies.map((currency) => {
+        const balance = balanceByCurrencyId.get(currency.id);
+        const balanceLabel =
+          balance !== undefined
+            ? ` (คงเหลือ ${formatNumber(balance)})`
+            : "";
+
+        return {
+          value: currency.id,
+          label: `${currency.name}${balanceLabel}`,
+        };
+      }),
+    [balanceByCurrencyId, currencies],
   );
 
   const typeOptions = useMemo(
@@ -54,7 +69,7 @@ export default function AdjustPointModal({
   );
 
   const resetForm = () => {
-    setCurrencyId(defaultCurrency?.currency.id ?? 0);
+    setCurrencyId(defaultCurrency?.id ?? 0);
     setType("earn");
     setValue("");
     setNote("");
@@ -64,6 +79,17 @@ export default function AdjustPointModal({
   const openModal = () => {
     resetForm();
     setIsOpen(true);
+    void getCurrencies()
+      .then((data) => {
+        setCurrencies(data);
+        const initial =
+          data.find((currency) => currency.is_default) ?? data[0];
+        if (initial) setCurrencyId(initial.id);
+      })
+      .catch((loadError) => {
+        setError(handleError(loadError).message);
+        setCurrencies([]);
+      });
   };
 
   const closeModal = () => {

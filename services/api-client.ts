@@ -9,11 +9,7 @@ declare module "axios" {
 
 class ApiClient {
   client: AxiosInstance;
-  // Browser calls same-origin /api (Next.js rewrite) to avoid Odoo CORS limits on PUT.
-  readonly apiBaseUrl =
-    typeof window !== "undefined"
-      ? "/api"
-      : `${process.env.NEXT_PUBLIC_API_URL}/api`;
+  readonly apiBaseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
   constructor() {
     this.client = axios.create({

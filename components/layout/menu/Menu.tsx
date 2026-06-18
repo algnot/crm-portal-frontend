@@ -6,6 +6,8 @@ import {
   BadgeCheck,
   LayoutDashboard,
   Menu as MenuIcon,
+  QrCode,
+  Ticket,
   Users,
 } from "lucide-react";
 import MenuItem from "./MenuItem";
@@ -63,6 +65,16 @@ export default function Menu() {
       icon: <BadgeCheck className={iconClassName} />,
       label: "ระดับสมาชิก",
       path: "/dashboard/tier",
+    },
+    {
+      icon: <Ticket className={iconClassName} />,
+      label: "จัดการคูปอง",
+      path: "/dashboard/coupons",
+    },
+    {
+      icon: <QrCode className={iconClassName} />,
+      label: "รางวัล QR Code",
+      path: "/dashboard/redeem-qrcodes",
     },
   ];
 

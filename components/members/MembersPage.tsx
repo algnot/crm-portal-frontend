@@ -89,7 +89,7 @@ export default function MembersPage() {
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="ค้นหาชื่อ, เบอร์โทร..."
-            className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-sm outline-none focus:border-brown-100"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pr-4 pl-10 text-sm outline-none focus:border-brown-100"
           />
         </form>
       </div>

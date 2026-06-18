@@ -1,13 +1,28 @@
 import apiClient from "@/services/api-client";
 import type {
   CreateTierRequest,
+  JoinRewardsResponse,
   PortalTier,
+  PortalTierReward,
   TierDetailResponse,
+  TierRewardInput,
+  TierRewardsResponse,
   TiersListResponse,
   UpdateTierRequest,
 } from "./types";
 
 const tierMutationConfig = { skipErrorAlert: true };
+
+const extractRewards = (data: {
+  rewards?: PortalTierReward[];
+  join_rewards?: PortalTierReward[];
+}) => data.rewards ?? data.join_rewards ?? [];
+
+const proxyPut = <T>(url: string, data: unknown) =>
+  apiClient.client.put<T>(url, data, {
+    ...tierMutationConfig,
+    baseURL: "",
+  });
 
 export const getTiers = async () => {
   const res = await apiClient.client.get<TiersListResponse>("/portal/tiers");
@@ -21,6 +36,20 @@ export const getTier = async (id: number) => {
   return res.data.tier;
 };
 
+export const getTierRewards = async (id: number) => {
+  const res = await apiClient.client.get<TierRewardsResponse>(
+    `/portal/tiers/${id}/rewards`,
+  );
+  return extractRewards(res.data);
+};
+
+export const getJoinRewards = async () => {
+  const res = await apiClient.client.get<JoinRewardsResponse>(
+    "/portal/tiers/join-rewards",
+  );
+  return extractRewards(res.data);
+};
+
 export const createTier = async (payload: CreateTierRequest) => {
   const res = await apiClient.client.post<TierDetailResponse>(
     "/portal/tiers",
@@ -30,9 +59,36 @@ export const createTier = async (payload: CreateTierRequest) => {
   return res.data.tier;
 };
 
+export const updateTier = async (id: number, payload: UpdateTierRequest) => {
+  const res = await proxyPut<TierDetailResponse>(
+    `/api/proxy/portal/tiers/${id}`,
+    payload,
+  );
+  return res.data.tier;
+};
+
+export const updateTierRewards = async (
+  id: number,
+  rewards: TierRewardInput[],
+) => {
+  const res = await proxyPut<TierRewardsResponse>(
+    `/api/proxy/portal/tiers/${id}/rewards`,
+    { rewards },
+  );
+  return extractRewards(res.data);
+};
+
+export const updateJoinRewards = async (rewards: TierRewardInput[]) => {
+  const res = await proxyPut<JoinRewardsResponse>(
+    "/api/proxy/portal/tiers/join-rewards",
+    { rewards },
+  );
+  return extractRewards(res.data);
+};
+
 export const buildTierUpdatePayload = (
   original: PortalTier,
-  next: CreateTierRequest,
+  next: Omit<CreateTierRequest, "rewards">,
 ): UpdateTierRequest => {
   const payload: UpdateTierRequest = {};
 
@@ -55,17 +111,39 @@ export const buildTierUpdatePayload = (
   return payload;
 };
 
-export const updateTier = async (id: number, payload: UpdateTierRequest) => {
-  const res = await apiClient.client.put<TierDetailResponse>(
-    `/portal/tiers/${id}`,
-    payload,
-    tierMutationConfig,
-  );
-  return res.data.tier;
-};
+export const rewardsToInputs = (
+  rewards: PortalTierReward[] | null | undefined,
+): TierRewardInput[] =>
+  (rewards ?? []).map((reward, index) => {
+    const base: TierRewardInput = {
+      ...(reward.id ? { id: reward.id } : {}),
+      reward_type: reward.reward_type,
+      sequence: reward.sequence ?? (index + 1) * 10,
+    };
+
+    if (reward.reward_type === "point") {
+      return {
+        ...base,
+        point_value: reward.point_value,
+        point_currency_id: reward.point_currency_id,
+      };
+    }
+
+    return {
+      ...base,
+      coupon_id: reward.coupon_id,
+    };
+  });
+
+export const rewardInputsEqual = (
+  left: TierRewardInput[],
+  right: TierRewardInput[],
+) => JSON.stringify(left) === JSON.stringify(right);
 
 export type {
   CreateTierRequest,
   PortalTier,
+  PortalTierReward,
+  TierRewardInput,
   UpdateTierRequest,
 } from "./types";

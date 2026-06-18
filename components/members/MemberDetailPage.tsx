@@ -1,6 +1,8 @@
 "use client";
 
 import AdjustPointModal from "@/components/members/AdjustPointModal";
+import UserCoupons from "@/components/members/UserCoupons";
+import UserPointHistory from "@/components/members/UserPointHistory";
 import { getUser } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
 import { handleError } from "@/utils/errors";
@@ -18,6 +20,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const loadUser = useCallback(async () => {
     setError(null);
@@ -52,6 +55,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
   const handlePointAdjusted = async () => {
     setSuccessMessage("ปรับ point สำเร็จ");
     await loadUser();
+    setActivityRefreshKey((key) => key + 1);
     setTimeout(() => setSuccessMessage(null), 3000);
   };
 
@@ -168,6 +172,11 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
             ))}
           </div>
         </section>
+      </div>
+
+      <div className="mt-6 space-y-6">
+        <UserPointHistory userId={userId} refreshKey={activityRefreshKey} />
+        <UserCoupons userId={userId} refreshKey={activityRefreshKey} />
       </div>
     </div>
   );

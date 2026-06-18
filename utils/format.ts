@@ -25,3 +25,25 @@ export function getDefaultCurrency(
     null
   );
 }
+
+const POINT_SOURCE_LABELS: Record<string, string> = {
+  admin: "แอดมิน",
+  redeem_qr: "แลก QR",
+  receipt: "ใบเสร็จ",
+  member_reward: "รางวัลสมาชิก",
+  redeem: "แลกคูปอง",
+  point_redeem: "แลกด้วย Point",
+};
+
+const POINT_TYPE_LABELS: Record<string, string> = {
+  earn: "เพิ่ม",
+  spend: "ลด",
+};
+
+export function formatPointSource(kind: string) {
+  return POINT_SOURCE_LABELS[kind] ?? kind;
+}
+
+export function formatPointType(type: string) {
+  return POINT_TYPE_LABELS[type] ?? type;
+}

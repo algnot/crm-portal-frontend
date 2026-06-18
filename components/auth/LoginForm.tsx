@@ -2,22 +2,25 @@
 
 import { FormEvent, useState } from "react";
 import { login } from "@/services/auth/auth";
+import { handleError } from "@/utils/errors";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
     setIsSubmitting(true);
 
     try {
       await login({ email, password });
       window.location.replace("/dashboard");
       return;
-    } catch {
-      // Error alert is handled by the api client interceptor.
+    } catch (submitError) {
+      setError(handleError(submitError).message);
       setIsSubmitting(false);
     }
   };
@@ -75,6 +78,8 @@ export default function LoginForm() {
               />
             </div>
           </div>
+
+          {error ? <p className="mt-4 text-sm text-red-100">{error}</p> : null}
 
           <button
             type="submit"

@@ -1,11 +1,12 @@
 "use client";
 
 import TierFormModal from "@/components/tiers/TierFormModal";
+import JoinRewardsModal from "@/components/tiers/JoinRewardsModal";
 import { getTier, getTiers } from "@/services/tiers/tiers";
 import type { PortalTier } from "@/services/tiers/types";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
-import { Pencil, Plus } from "lucide-react";
+import { Gift, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function TiersPage() {
@@ -17,6 +18,7 @@ export default function TiersPage() {
     undefined,
   );
   const [editingTierId, setEditingTierId] = useState<number | null>(null);
+  const [showJoinRewards, setShowJoinRewards] = useState(false);
 
   const loadTiers = useCallback(async () => {
     setError(null);
@@ -75,14 +77,24 @@ export default function TiersPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl bg-brown-100 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80"
-        >
-          <Plus className="size-4" />
-          เพิ่มระดับ
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setShowJoinRewards(true)}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl border border-brown-100 px-5 py-2.5 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5"
+          >
+            <Gift className="size-4" />
+            รางวัลสมาชิกใหม่
+          </button>
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl bg-brown-100 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80"
+          >
+            <Plus className="size-4" />
+            เพิ่มระดับ
+          </button>
+        </div>
       </div>
 
       {successMessage ? (
@@ -109,6 +121,7 @@ export default function TiersPage() {
                   <th className="px-4 py-4 font-medium">รหัส</th>
                   <th className="px-4 py-4 font-medium">ยอดใช้จ่าย</th>
                   <th className="px-4 py-4 font-medium">แปลง Point</th>
+                  <th className="px-4 py-4 font-medium">รางวัล</th>
                   <th className="px-4 py-4 font-medium">แสดงใน UI</th>
                   <th className="px-4 py-4 font-medium" />
                 </tr>
@@ -137,6 +150,9 @@ export default function TiersPage() {
                     </td>
                     <td className="px-4 py-4 text-brown-100">
                       {formatNumber(tier.convert_points)}
+                    </td>
+                    <td className="px-4 py-4 text-defualt-text">
+                      {formatNumber(tier.rewards?.length ?? 0)} รายการ
                     </td>
                     <td className="px-4 py-4">
                       <span
@@ -173,6 +189,16 @@ export default function TiersPage() {
           tier={modalTier}
           onClose={closeModal}
           onSuccess={handleSuccess}
+        />
+      ) : null}
+
+      {showJoinRewards ? (
+        <JoinRewardsModal
+          onClose={() => setShowJoinRewards(false)}
+          onSuccess={() => {
+            setSuccessMessage("บันทึกรางวัลสมาชิกใหม่สำเร็จ");
+            setTimeout(() => setSuccessMessage(null), 3000);
+          }}
         />
       ) : null}
     </div>
