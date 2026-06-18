@@ -14,6 +14,12 @@ const HOP_BY_HOP_HEADERS = new Set([
   "host",
 ]);
 
+const SKIP_RESPONSE_HEADERS = new Set([
+  ...HOP_BY_HOP_HEADERS,
+  "content-encoding",
+  "content-length",
+]);
+
 const SKIP_REQUEST_HEADERS = new Set([
   ...HOP_BY_HOP_HEADERS,
   "cookie",
@@ -54,11 +60,13 @@ async function proxyRequest(request: NextRequest, path: string[]) {
 
   const responseHeaders = new Headers();
   response.headers.forEach((value, key) => {
-    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) return;
+    if (SKIP_RESPONSE_HEADERS.has(key.toLowerCase())) return;
     responseHeaders.set(key, value);
   });
 
-  return new NextResponse(response.body, {
+  const responseBody = await response.arrayBuffer();
+
+  return new NextResponse(responseBody, {
     status: response.status,
     headers: responseHeaders,
   });

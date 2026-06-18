@@ -81,7 +81,7 @@ export const updateTierRewards = async (
 export const updateJoinRewards = async (rewards: TierRewardInput[]) => {
   const res = await proxyPut<JoinRewardsResponse>(
     "/api/proxy/portal/tiers/join-rewards",
-    { rewards },
+    { join_rewards: rewards },
   );
   return extractRewards(res.data);
 };

@@ -70,3 +70,7 @@ export type UpdateTierRequest = Partial<CreateTierRequest> & {
 export type UpdateTierRewardsRequest = {
   rewards: TierRewardInput[];
 };
+
+export type UpdateJoinRewardsRequest = {
+  join_rewards: TierRewardInput[];
+};

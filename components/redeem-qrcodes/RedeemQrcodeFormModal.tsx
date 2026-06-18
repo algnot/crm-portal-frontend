@@ -12,8 +12,12 @@ import type { PortalCoupon } from "@/services/coupons/types";
 import { getCurrencies } from "@/services/currencies/currencies";
 import type { PortalCurrency } from "@/services/currencies/types";
 import Select from "@/components/util/Select";
+import {
+  formatDateTime,
+  toApiDateTime,
+  toDatetimeLocalValue,
+} from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
-import { toApiDateTime, toDatetimeLocalValue } from "@/utils/datetime";
 import { formatNumber } from "@/utils/format";
 import { Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -66,6 +70,19 @@ function toFormState(qrcode: PortalRedeemQrcode): RedeemQrcodeFormState {
 const inputClassName =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-brown-100";
 
+function formatRewardSummary(qrcode: PortalRedeemQrcode) {
+  const parts: string[] = [];
+  if (qrcode.value > 0) {
+    parts.push(
+      `${formatNumber(qrcode.value)} ${qrcode.currency_name ?? "point"}`,
+    );
+  }
+  if (qrcode.reward_coupon && typeof qrcode.reward_coupon === "object") {
+    parts.push(`คูปอง: ${qrcode.reward_coupon.name}`);
+  }
+  return parts.length > 0 ? parts.join(" + ") : "-";
+}
+
 export default function RedeemQrcodeFormModal({
   qrcode,
   onClose,
@@ -81,6 +98,7 @@ export default function RedeemQrcodeFormModal({
   const [displayQrcode, setDisplayQrcode] = useState<PortalRedeemQrcode | null>(
     qrcode ?? null,
   );
+  const [showCreateResult, setShowCreateResult] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
@@ -219,6 +237,7 @@ export default function RedeemQrcodeFormModal({
       } else {
         const created = await createRedeemQrcode(payload);
         setDisplayQrcode(created);
+        setShowCreateResult(true);
       }
       onSuccess();
     } catch (submitError) {
@@ -264,203 +283,285 @@ export default function RedeemQrcodeFormModal({
           id="redeem-qrcode-form-title"
           className="text-xl font-bold text-defualt-text"
         >
-          {isEdit ? "แก้ไข Redeem QR" : "สร้าง Redeem QR"}
+          {showCreateResult
+            ? "สร้าง Redeem QR สำเร็จ"
+            : isEdit
+              ? "แก้ไข Redeem QR"
+              : "สร้าง Redeem QR"}
         </h2>
         <p className="mt-1 text-sm text-gray-100">
-          กำหนดรางวัลที่สมาชิกจะได้รับเมื่อสแกน QR Code
+          {showCreateResult
+            ? "QR Code พร้อมใช้งานแล้ว"
+            : "กำหนดรางวัลที่สมาชิกจะได้รับเมื่อสแกน QR Code"}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <Section title="ข้อมูลทั่วไป">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="ชื่อ" className="md:col-span-2">
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, name: event.target.value }))
-                  }
-                  className={inputClassName}
-                  placeholder="เช่น Event QR 100pts"
-                />
-              </Field>
-
-              <Field label="ประเภท">
-                <Select
-                  value={form.type}
-                  options={typeOptions}
-                  onChange={(value) =>
-                    setForm((prev) => ({ ...prev, type: value }))
-                  }
-                />
-              </Field>
-
-              <Field label="วันหมดอายุ">
-                <input
-                  type="datetime-local"
-                  value={form.expirationDate}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      expirationDate: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="รางวัล">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="จำนวน Point">
-                <input
-                  type="number"
-                  min="0"
-                  value={form.value}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, value: event.target.value }))
-                  }
-                  className={inputClassName}
-                />
-              </Field>
-
-              <Field label="สกุล Point">
-                <Select
-                  value={form.currencyId}
-                  options={currencyOptions}
-                  onChange={(value) =>
-                    setForm((prev) => ({ ...prev, currencyId: value }))
-                  }
-                />
-              </Field>
-
-              <Field label="คูปองรางวัล (ถ้ามี)" className="md:col-span-2">
-                <Select
-                  value={form.rewardCouponId}
-                  options={couponOptions}
-                  onChange={(value) =>
-                    setForm((prev) => ({ ...prev, rewardCouponId: value }))
-                  }
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="ข้อจำกัด">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="จำกัดต่อคน">
-                <input
-                  type="number"
-                  min="0"
-                  value={form.limitPerUser}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      limitPerUser: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                />
-              </Field>
-
-              <Field label="จำกัดต่อ QR">
-                <input
-                  type="number"
-                  min="0"
-                  value={form.limitPerQr}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      limitPerQr: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                />
-              </Field>
-            </div>
-          </Section>
-
-          {displayQrcode?.qr_code_url ? (
-            <Section title="QR Code">
-              <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
-                <img
-                  src={displayQrcode.qr_code_url}
-                  alt={`QR Code ${displayQrcode.name}`}
-                  className="size-44 rounded-xl border border-gray-200 bg-white p-2"
-                />
-                <div className="w-full space-y-3 text-sm">
-                  <div>
-                    <p className="mb-1 font-medium text-defualt-text">Code</p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 truncate rounded-lg bg-gray-10 px-3 py-2 text-xs">
-                        {displayQrcode.code}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void copyToClipboard(displayQrcode.code, " Code ")
-                        }
-                        className="inline-flex cursor-pointer items-center gap-1 rounded-4xl border border-gray-200 px-3 py-2 text-xs text-defualt-text transition hover:bg-gray-10"
-                      >
-                        <Copy className="size-3.5" />
-                        คัดลอก
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="mb-1 font-medium text-defualt-text">
-                      Redeem URL
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 truncate rounded-lg bg-gray-10 px-3 py-2 text-xs">
-                        {displayQrcode.redeem_url}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void copyToClipboard(
-                            displayQrcode.redeem_url,
-                            " URL ",
-                          )
-                        }
-                        className="inline-flex cursor-pointer items-center gap-1 rounded-4xl border border-gray-200 px-3 py-2 text-xs text-defualt-text transition hover:bg-gray-10"
-                      >
-                        <Copy className="size-3.5" />
-                        คัดลอก
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {copyMessage ? (
-                <p className="mt-3 text-xs text-brown-100">{copyMessage}</p>
-              ) : null}
-            </Section>
-          ) : null}
-
-          {error ? <p className="text-sm text-red-100">{error}</p> : null}
-
-          <div className="flex gap-3 pt-2">
+        {showCreateResult && displayQrcode ? (
+          <div className="mt-5 space-y-4">
+            <CreateResultView
+              qrcode={displayQrcode}
+              copyMessage={copyMessage}
+              onCopy={copyToClipboard}
+            />
             <button
               type="button"
-              disabled={isSubmitting}
               onClick={closeModal}
-              className="w-full cursor-pointer rounded-4xl bg-gray-10 px-4 py-2.5 text-sm font-medium text-gray-100 transition hover:bg-gray-10/80 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full cursor-pointer rounded-4xl bg-brown-100 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80"
             >
-              {displayQrcode?.qr_code_url ? "ปิด" : "ยกเลิก"}
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full cursor-pointer rounded-4xl bg-brown-100 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+              ปิด
             </button>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <Section title="ข้อมูลทั่วไป">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="ชื่อ" className="md:col-span-2">
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, name: event.target.value }))
+                    }
+                    className={inputClassName}
+                    placeholder="เช่น Event QR 100pts"
+                  />
+                </Field>
+
+                <Field label="ประเภท">
+                  <Select
+                    value={form.type}
+                    options={typeOptions}
+                    onChange={(value) =>
+                      setForm((prev) => ({ ...prev, type: value }))
+                    }
+                  />
+                </Field>
+
+                <Field label="วันหมดอายุ">
+                  <input
+                    type="datetime-local"
+                    value={form.expirationDate}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        expirationDate: event.target.value,
+                      }))
+                    }
+                    className={inputClassName}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="รางวัล">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="จำนวน Point">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.value}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, value: event.target.value }))
+                    }
+                    className={inputClassName}
+                  />
+                </Field>
+
+                <Field label="สกุล Point">
+                  <Select
+                    value={form.currencyId}
+                    options={currencyOptions}
+                    onChange={(value) =>
+                      setForm((prev) => ({ ...prev, currencyId: value }))
+                    }
+                  />
+                </Field>
+
+                <Field label="คูปองรางวัล (ถ้ามี)" className="md:col-span-2">
+                  <Select
+                    value={form.rewardCouponId}
+                    options={couponOptions}
+                    onChange={(value) =>
+                      setForm((prev) => ({ ...prev, rewardCouponId: value }))
+                    }
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="ข้อจำกัด">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="จำกัดต่อคน">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.limitPerUser}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        limitPerUser: event.target.value,
+                      }))
+                    }
+                    className={inputClassName}
+                  />
+                </Field>
+
+                <Field label="จำกัดต่อ QR">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.limitPerQr}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        limitPerQr: event.target.value,
+                      }))
+                    }
+                    className={inputClassName}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {isEdit && displayQrcode?.qr_code_url ? (
+              <QrCodeSection
+                qrcode={displayQrcode}
+                copyMessage={copyMessage}
+                onCopy={copyToClipboard}
+              />
+            ) : null}
+
+            {error ? <p className="text-sm text-red-100">{error}</p> : null}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={closeModal}
+                className="w-full cursor-pointer rounded-4xl bg-gray-10 px-4 py-2.5 text-sm font-medium text-gray-100 transition hover:bg-gray-10/80 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full cursor-pointer rounded-4xl bg-brown-100 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
+  );
+}
+
+function CreateResultView({
+  qrcode,
+  copyMessage,
+  onCopy,
+}: {
+  qrcode: PortalRedeemQrcode;
+  copyMessage: string | null;
+  onCopy: (text: string, label: string) => void;
+}) {
+  return (
+    <>
+      <Section title="รายละเอียด">
+        <dl className="grid gap-3 text-sm md:grid-cols-2">
+          <DetailItem label="ชื่อ" value={qrcode.name} />
+          <DetailItem
+            label="ประเภท"
+            value={qrcode.type === "earn" ? "รับ Point" : "ใช้ Point"}
+          />
+          <DetailItem label="รางวัล" value={formatRewardSummary(qrcode)} />
+          <DetailItem
+            label="หมดอายุ"
+            value={formatDateTime(qrcode.expiration_date)}
+          />
+          <DetailItem
+            label="จำกัดต่อคน"
+            value={formatNumber(qrcode.limit_per_user)}
+          />
+          <DetailItem
+            label="จำกัดต่อ QR"
+            value={formatNumber(qrcode.limit_per_qr)}
+          />
+        </dl>
+      </Section>
+
+      <QrCodeSection qrcode={qrcode} copyMessage={copyMessage} onCopy={onCopy} />
+    </>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-gray-100">{label}</dt>
+      <dd className="mt-0.5 font-medium text-defualt-text">{value}</dd>
+    </div>
+  );
+}
+
+function QrCodeSection({
+  qrcode,
+  copyMessage,
+  onCopy,
+}: {
+  qrcode: PortalRedeemQrcode;
+  copyMessage: string | null;
+  onCopy: (text: string, label: string) => void;
+}) {
+  if (!qrcode.qr_code_url) return null;
+
+  return (
+    <Section title="QR Code">
+      <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
+        <img
+          src={qrcode.qr_code_url}
+          alt={`QR Code ${qrcode.name}`}
+          className="size-44 rounded-xl border border-gray-200 bg-white p-2"
+        />
+        <div className="w-full space-y-3 text-sm">
+          <div>
+            <p className="mb-1 font-medium text-defualt-text">Code</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded-lg bg-gray-10 px-3 py-2 text-xs">
+                {qrcode.code}
+              </code>
+              <button
+                type="button"
+                onClick={() => void onCopy(qrcode.code, " Code ")}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-4xl border border-gray-200 px-3 py-2 text-xs text-defualt-text transition hover:bg-gray-10"
+              >
+                <Copy className="size-3.5" />
+                คัดลอก
+              </button>
+            </div>
+          </div>
+          <div>
+            <p className="mb-1 font-medium text-defualt-text">Redeem URL</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded-lg bg-gray-10 px-3 py-2 text-xs">
+                {qrcode.redeem_url}
+              </code>
+              <button
+                type="button"
+                onClick={() => void onCopy(qrcode.redeem_url, " URL ")}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-4xl border border-gray-200 px-3 py-2 text-xs text-defualt-text transition hover:bg-gray-10"
+              >
+                <Copy className="size-3.5" />
+                คัดลอก
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {copyMessage ? (
+        <p className="mt-3 text-xs text-brown-100">{copyMessage}</p>
+      ) : null}
+    </Section>
   );
 }
 

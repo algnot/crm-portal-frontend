@@ -10,7 +10,7 @@ import type { PortalRedeemQrcode } from "@/services/redeem-qrcodes/types";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
-import { ChevronLeft, ChevronRight, Pencil, Plus, QrCode } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PAGE_SIZE = 20;
@@ -196,25 +196,7 @@ export default function RedeemQrcodesPage() {
                     className="border-b border-gray-200 last:border-b-0"
                   >
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        {qrcode.qr_code_url ? (
-                          <img
-                            src={qrcode.qr_code_url}
-                            alt={qrcode.name}
-                            className="size-10 rounded-lg border border-gray-200 bg-white p-0.5"
-                          />
-                        ) : (
-                          <div className="flex size-10 items-center justify-center rounded-lg bg-brown-yellow-5 text-brown-100">
-                            <QrCode className="size-5" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-defualt-text">
-                            {qrcode.name}
-                          </p>
-                          <p className="text-xs text-gray-100">{qrcode.code}</p>
-                        </div>
-                      </div>
+                      <p className="font-medium text-defualt-text">{qrcode.name}</p>
                     </td>
                     <td className="px-4 py-4 text-defualt-text">
                       {formatReward(qrcode)}
