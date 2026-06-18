@@ -9,6 +9,14 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat("th-TH").format(value);
 }
 
+export function formatReviewedBy(
+  reviewedBy: { name: string } | string | false | null | undefined,
+) {
+  if (!reviewedBy) return "-";
+  if (typeof reviewedBy === "object") return reviewedBy.name;
+  return reviewedBy;
+}
+
 export function getDefaultPointBalance(
   points: { currency: { is_default: boolean }; balance: number }[],
 ) {

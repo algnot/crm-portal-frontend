@@ -9,6 +9,7 @@ import {
   QrCode,
   Receipt,
   Ticket,
+  UserCog,
   Users,
 } from "lucide-react";
 import MenuItem from "./MenuItem";
@@ -81,6 +82,11 @@ export default function Menu() {
       icon: <QrCode className={iconClassName} />,
       label: "รางวัล QR Code",
       path: "/dashboard/redeem-qrcodes",
+    },
+    {
+      icon: <UserCog className={iconClassName} />,
+      label: "จัดการทีม",
+      path: "/dashboard/team",
     },
   ];
 

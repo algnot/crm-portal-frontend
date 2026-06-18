@@ -1,6 +1,7 @@
 "use client";
 
-import { Info, ChevronDown } from "lucide-react";
+import ProfileSettingsModal from "@/components/profile/ProfileSettingsModal";
+import { Info, ChevronDown, Settings } from "lucide-react";
 import dialog from "@/components/util/dialog";
 import { useApp } from "@/providers/app-provider";
 import { logout } from "@/services/auth/auth";
@@ -19,8 +20,9 @@ function getInitials(fullName?: string): string {
 }
 
 export default function Profile() {
-  const { me } = useApp();
+  const { me, fetchMe } = useApp();
   const [isOpen, setIsOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,6 +102,18 @@ export default function Profile() {
           <button
             type="button"
             role="menuitem"
+            onClick={() => {
+              setShowSettings(true);
+              setIsOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-gray-100 hover:text-brown-100 cursor-pointer"
+          >
+            <Settings className="size-4" />
+            ตั้งค่าบัญชี
+          </button>
+          <button
+            type="button"
+            role="menuitem"
             onClick={handleLogout}
             className="w-full px-4 py-3 text-left text-sm hover:text-brown-100 cursor-pointer text-gray-100"
           >
@@ -107,6 +121,14 @@ export default function Profile() {
           </button>
         </div>
       )}
+
+      {showSettings && me ? (
+        <ProfileSettingsModal
+          me={me}
+          onClose={() => setShowSettings(false)}
+          onSuccess={() => void fetchMe()}
+        />
+      ) : null}
     </div>
   );
 }

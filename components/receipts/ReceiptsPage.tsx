@@ -213,7 +213,9 @@ export default function ReceiptsPage() {
                       <StateBadge state={receipt.state} />
                     </td>
                     <td className="px-4 py-4 text-gray-100">
-                      {formatDateTime(receipt.create_date)}
+                      {formatDateTime(
+                        receipt.submitted_date ?? receipt.create_date,
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <button

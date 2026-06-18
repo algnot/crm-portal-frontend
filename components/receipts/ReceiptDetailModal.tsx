@@ -9,7 +9,7 @@ import {
 } from "@/services/receipts/receipts";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
-import { displayValue, formatNumber } from "@/utils/format";
+import { displayValue, formatNumber, formatReviewedBy } from "@/utils/format";
 import { Check, ExternalLink, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -236,7 +236,9 @@ export default function ReceiptDetailModal({
                 />
                 <DetailItem
                   label="วันที่ส่ง"
-                  value={formatDateTime(receipt.create_date)}
+                  value={formatDateTime(
+                    receipt.submitted_date ?? receipt.create_date,
+                  )}
                 />
                 <DetailItem label="ระดับสมาชิก" value={receipt.tier.name} />
                 <DetailItem
@@ -246,7 +248,7 @@ export default function ReceiptDetailModal({
                 {receipt.reviewed_by ? (
                   <DetailItem
                     label="ตรวจสอบโดย"
-                    value={String(receipt.reviewed_by)}
+                    value={formatReviewedBy(receipt.reviewed_by)}
                   />
                 ) : null}
                 {receipt.reviewed_date ? (

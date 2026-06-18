@@ -16,6 +16,11 @@ export type ReceiptUser = {
   email?: string | false;
 };
 
+export type ReceiptReviewer = {
+  id: number;
+  name: string;
+};
+
 export type ReceiptPoint = {
   id: number;
   value: number;
@@ -32,12 +37,13 @@ export type PortalReceipt = {
   tier_convert_points: number;
   tier: ReceiptTier;
   user: ReceiptUser;
-  reviewed_by: string | false;
+  reviewed_by: ReceiptReviewer | string | false;
   reviewed_date?: string | false;
   reject_reason?: string | false;
   spending_point: ReceiptPoint;
   reward_point: ReceiptPoint;
   create_date?: string | false;
+  submitted_date?: string | false;
 };
 
 export type ReceiptsListParams = {
