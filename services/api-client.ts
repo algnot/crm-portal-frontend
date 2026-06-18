@@ -63,9 +63,32 @@ class ApiClient {
 
 const apiClient = new ApiClient();
 
+const getCookieToken = () => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|; )access_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 export const getToken = () => {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("access_token");
+
+  const fromStorage = window.localStorage.getItem("access_token");
+  if (fromStorage) return fromStorage;
+
+  const fromCookie = getCookieToken();
+  if (fromCookie) {
+    window.localStorage.setItem("access_token", fromCookie);
+    return fromCookie;
+  }
+
+  return null;
+};
+
+export const syncToken = () => {
+  const token = getToken();
+  if (token) {
+    setToken(token);
+  }
 };
 
 export const setToken = (token: string) => {

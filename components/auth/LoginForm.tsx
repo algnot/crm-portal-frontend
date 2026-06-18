@@ -1,15 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useApp } from "@/providers/app-provider";
 import { login } from "@/services/auth/auth";
 import { handleError } from "@/utils/errors";
 
 const PARTNER_DOMAIN_KEY = "partner_domain";
 
 export default function LoginForm() {
-  const [domain, setDomain] = useState(
-    () => process.env.NEXT_PUBLIC_PARTNER_DOMAIN ?? "",
-  );
+  const { authStatus } = useApp();
+  const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +21,12 @@ export default function LoginForm() {
       setDomain(savedDomain);
     }
   }, []);
+
+  useEffect(() => {
+    if (authStatus === "authenticated") {
+      window.location.replace("/dashboard");
+    }
+  }, [authStatus]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

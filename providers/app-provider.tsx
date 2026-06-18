@@ -1,6 +1,7 @@
 "use client";
 
-import { getToken } from "@/services/api-client";
+import { clearToken, getToken, syncToken } from "@/services/api-client";
+import { handleError } from "@/utils/errors";
 import { getMe, type PortalMeResponse } from "@/services/auth/auth";
 import DialogHost from "@/components/util/DialogHost";
 import {
@@ -63,7 +64,10 @@ export default function AppProvider({
       setMe(profile);
       setAuthStatus("authenticated");
       return profile;
-    } catch {
+    } catch (error) {
+      if (handleError(error).status === 401) {
+        clearToken();
+      }
       meRef.current = null;
       setMe(null);
       setAuthStatus("unauthenticated");
@@ -73,6 +77,7 @@ export default function AppProvider({
 
   useEffect(() => {
     setIsMounted(true);
+    syncToken();
     void fetchMe();
   }, [fetchMe]);
 
