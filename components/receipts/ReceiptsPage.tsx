@@ -3,6 +3,7 @@
 import ReceiptDetailModal, {
   StateBadge,
 } from "@/components/receipts/ReceiptDetailModal";
+import ActionMenu from "@/components/util/ActionMenu";
 import { getReceipts } from "@/services/receipts/receipts";
 import type { PortalReceipt, ReceiptState } from "@/services/receipts/types";
 import { formatDateTime } from "@/utils/datetime";
@@ -214,9 +215,9 @@ export default function ReceiptsPage() {
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <OpenReceiptButton
+                        <ReceiptActionsMenu
                           state={receipt.state}
-                          onClick={() => setSelectedReceiptId(receipt.id)}
+                          onOpen={() => setSelectedReceiptId(receipt.id)}
                         />
                       </td>
                     </tr>
@@ -298,28 +299,24 @@ function MemberCell({ user }: { user: PortalReceipt["user"] }) {
   );
 }
 
-function OpenReceiptButton({
+function ReceiptActionsMenu({
   state,
-  onClick,
-  fullWidth = false,
+  onOpen,
 }: {
   state: PortalReceipt["state"];
-  onClick: () => void;
-  fullWidth?: boolean;
+  onOpen: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 ${
-        fullWidth ? "w-full" : ""
-      }`}
-    >
-      <Eye className="size-4 shrink-0" />
-      <span className="truncate">
-        {state === "pending" ? "ตรวจสอบ" : "ดูรายละเอียด"}
-      </span>
-    </button>
+    <ActionMenu
+      ariaLabel={state === "pending" ? "ตรวจสอบใบเสร็จ" : "ดูรายละเอียดใบเสร็จ"}
+      items={[
+        {
+          label: state === "pending" ? "ตรวจสอบ" : "ดูรายละเอียด",
+          icon: <Eye className="size-4" />,
+          onClick: onOpen,
+        },
+      ]}
+    />
   );
 }
 
@@ -341,7 +338,10 @@ function ReceiptCard({
             {formatDateTime(receipt.submitted_date ?? receipt.create_date)}
           </p>
         </div>
-        <StateBadge state={receipt.state} className="shrink-0" />
+        <div className="flex shrink-0 items-center gap-2">
+          <StateBadge state={receipt.state} />
+          <ReceiptActionsMenu state={receipt.state} onOpen={onOpen} />
+        </div>
       </div>
 
       <MemberCell user={receipt.user} />
@@ -368,12 +368,6 @@ function ReceiptCard({
           </dd>
         </div>
       </dl>
-
-      <OpenReceiptButton
-        state={receipt.state}
-        onClick={onOpen}
-        fullWidth
-      />
     </div>
   );
 }

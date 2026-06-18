@@ -159,7 +159,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
               >
                 <div>
                   <p className="font-medium text-defualt-text">
-                    {point.currency.name}
+                    {point.currency.name.toUpperCase()}
                   </p>
                   {point.currency.is_default ? (
                     <p className="text-xs text-gray-100">ค่าเริ่มต้น</p>
