@@ -3,6 +3,7 @@
 import {
   buildRedeemQrcodeUpdatePayload,
   createRedeemQrcode,
+  getRewardCouponId,
   updateRedeemQrcode,
   type CreateRedeemQrcodeRequest,
   type PortalRedeemQrcode,
@@ -58,9 +59,7 @@ function toFormState(qrcode: PortalRedeemQrcode): RedeemQrcodeFormState {
     type: qrcode.type,
     value: String(qrcode.value),
     currencyId: qrcode.currency_id ?? 0,
-    rewardCouponId: qrcode.reward_coupon_id
-      ? Number(qrcode.reward_coupon_id)
-      : 0,
+    rewardCouponId: getRewardCouponId(qrcode),
     limitPerUser: String(qrcode.limit_per_user),
     limitPerQr: String(qrcode.limit_per_qr),
     expirationDate: toDatetimeLocalValue(qrcode.expiration_date),
@@ -102,6 +101,13 @@ export default function RedeemQrcodeFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (qrcode) {
+      setForm(toFormState(qrcode));
+      setDisplayQrcode(qrcode);
+    }
+  }, [qrcode]);
 
   useEffect(() => {
     void Promise.all([getCurrencies(), getCoupons()])

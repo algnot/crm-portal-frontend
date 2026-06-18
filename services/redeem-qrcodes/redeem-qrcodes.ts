@@ -10,6 +10,16 @@ import type {
 
 const mutationConfig = { skipErrorAlert: true };
 
+export const getRewardCouponId = (qrcode: PortalRedeemQrcode): number => {
+  if (typeof qrcode.reward_coupon_id === "number" && qrcode.reward_coupon_id > 0) {
+    return qrcode.reward_coupon_id;
+  }
+  if (qrcode.reward_coupon && typeof qrcode.reward_coupon === "object") {
+    return qrcode.reward_coupon.id;
+  }
+  return 0;
+};
+
 export const getRedeemQrcodes = async (params: RedeemQrcodesListParams = {}) => {
   const res = await apiClient.client.get<RedeemQrcodesListResponse>(
     "/portal/redeem-qrcodes",
@@ -83,7 +93,7 @@ export const buildRedeemQrcodeUpdatePayload = (
     }
   }
   if (next.reward_coupon_id !== undefined) {
-    const originalCouponId = original.reward_coupon_id || 0;
+    const originalCouponId = getRewardCouponId(original);
     const nextCouponId = next.reward_coupon_id || 0;
     if (nextCouponId !== originalCouponId) {
       payload.reward_coupon_id = next.reward_coupon_id;
