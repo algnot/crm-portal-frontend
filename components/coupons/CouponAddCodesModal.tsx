@@ -5,11 +5,10 @@ import {
   downloadCouponCodesImportTemplate,
 } from "@/services/coupons/coupons";
 import type { PortalCoupon } from "@/services/coupons/types";
-import Select from "@/components/util/Select";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
 import { readFileAsBase64 } from "@/utils/file";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
 const DEFAULT_MAX_CODE_BATCH = 2000;
@@ -23,10 +22,7 @@ type CouponAddCodesModalProps = {
   onSuccess: (addedCount: number) => void;
 };
 
-type AddSourceMode = "generate" | "import";
-
 type AddCodesFormState = {
-  addSource: AddSourceMode;
   codeQuantity: string;
   randomRange: string;
   prefixCode: string;
@@ -36,13 +32,16 @@ type AddCodesFormState = {
 
 function toFormState(coupon: PortalCoupon): AddCodesFormState {
   return {
-    addSource: "generate",
     codeQuantity: "100",
     randomRange: String(coupon.random_range || 6),
     prefixCode: coupon.prefix_code ? String(coupon.prefix_code) : "",
     suffixCode: coupon.suffix_code ? String(coupon.suffix_code) : "",
     importFilename: "",
   };
+}
+
+function getCodeSourceLabel(codeSource: PortalCoupon["code_source"]) {
+  return codeSource === "generate" ? "สร้างโค้ดอัตโนมัติ" : "นำเข้า CSV";
 }
 
 const inputClassName =
@@ -63,14 +62,7 @@ export default function CouponAddCodesModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const addSourceOptions = useMemo(
-    () => [
-      { value: "generate" as const, label: "สร้างโค้ดอัตโนมัติ" },
-      { value: "import" as const, label: "นำเข้า CSV" },
-    ],
-    [],
-  );
+  const lockedCodeSource = coupon.code_source;
 
   const closeModal = () => {
     setIsClosing(true);
@@ -137,7 +129,7 @@ export default function CouponAddCodesModal({
     setIsSubmitting(true);
 
     try {
-      if (form.addSource === "generate") {
+      if (lockedCodeSource === "generate") {
         const codeQuantity = Number(form.codeQuantity);
         const randomRange = Number(form.randomRange);
 
@@ -221,14 +213,17 @@ export default function CouponAddCodesModal({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <section className="rounded-2xl border border-gray-200 bg-white p-4 md:p-5">
             <Field label="วิธีเพิ่มโค้ด">
-              <Select
-                value={form.addSource}
-                options={addSourceOptions}
-                onChange={(value) => updateField("addSource", value)}
+              <input
+                value={getCodeSourceLabel(lockedCodeSource)}
+                disabled
+                className={`${inputClassName} bg-gray-10 text-gray-100`}
               />
+              <p className="mt-1 text-xs text-gray-100">
+                วิธีนี้ถูกกำหนดตอนสร้างคูปองและไม่สามารถเปลี่ยนได้
+              </p>
             </Field>
 
-            {form.addSource === "generate" ? (
+            {lockedCodeSource === "generate" ? (
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <Field label="จำนวนโค้ด">
                   <input
