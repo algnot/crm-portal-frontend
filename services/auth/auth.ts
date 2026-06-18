@@ -19,9 +19,9 @@ const mutationConfig = { skipErrorAlert: true };
 
 export const login = async (payload: PortalLoginRequest) => {
   const res = await apiClient.client.post<PortalLoginResponse>(
-    "/api/proxy/portal/login",
+    "/portal/login",
     payload,
-    { baseURL: "", skipErrorAlert: true },
+    mutationConfig,
   );
   setToken(res.data.token);
   return res.data;
@@ -43,9 +43,9 @@ export const getMe = async () => {
 
 export const updateMe = async (payload: UpdateMeRequest) => {
   const res = await apiClient.client.put<PortalMeResponse>(
-    "/api/proxy/portal/me",
+    "/portal/me",
     payload,
-    { baseURL: "", ...mutationConfig },
+    mutationConfig,
   );
   return res.data;
 };

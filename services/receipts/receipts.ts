@@ -11,18 +11,6 @@ import type {
 
 const mutationConfig = { skipErrorAlert: true };
 
-const proxyPost = <T>(url: string, data?: unknown) =>
-  apiClient.client.post<T>(url, data, {
-    ...mutationConfig,
-    baseURL: "",
-  });
-
-const proxyPut = <T>(url: string, data: unknown) =>
-  apiClient.client.put<T>(url, data, {
-    ...mutationConfig,
-    baseURL: "",
-  });
-
 export const getReceipts = async (params: ReceiptsListParams = {}) => {
   const res = await apiClient.client.get<ReceiptsListResponse>(
     "/portal/receipts",
@@ -53,9 +41,10 @@ export const updateReceipt = async (
   id: number,
   payload: UpdateReceiptRequest,
 ) => {
-  const res = await proxyPut<ReceiptDetailResponse>(
-    `/api/proxy/portal/receipts/${id}`,
+  const res = await apiClient.client.put<ReceiptDetailResponse>(
+    `/portal/receipts/${id}`,
     payload,
+    mutationConfig,
   );
   return res.data.receipt;
 };
@@ -64,9 +53,10 @@ export const approveReceipt = async (
   id: number,
   payload: ApproveReceiptRequest = {},
 ) => {
-  const res = await proxyPost<ReceiptDetailResponse>(
-    `/api/proxy/portal/receipts/${id}/approve`,
+  const res = await apiClient.client.post<ReceiptDetailResponse>(
+    `/portal/receipts/${id}/approve`,
     payload,
+    mutationConfig,
   );
   return res.data.receipt;
 };
@@ -75,9 +65,10 @@ export const rejectReceipt = async (
   id: number,
   payload: RejectReceiptRequest,
 ) => {
-  const res = await proxyPost<ReceiptDetailResponse>(
-    `/api/proxy/portal/receipts/${id}/reject`,
+  const res = await apiClient.client.post<ReceiptDetailResponse>(
+    `/portal/receipts/${id}/reject`,
     payload,
+    mutationConfig,
   );
   return res.data.receipt;
 };

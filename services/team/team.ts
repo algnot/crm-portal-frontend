@@ -15,12 +15,6 @@ import type {
 
 const mutationConfig = { skipErrorAlert: true };
 
-const proxyDelete = <T>(url: string) =>
-  apiClient.client.delete<T>(url, {
-    ...mutationConfig,
-    baseURL: "",
-  });
-
 export const getTeamUsers = async (params: TeamUsersListParams = {}) => {
   const res = await apiClient.client.get<TeamUsersListResponse>(
     "/portal/team",
@@ -53,12 +47,9 @@ export const updateTeamUser = async (
   payload: UpdateTeamUserRequest,
 ) => {
   const res = await apiClient.client.put<TeamUserDetailResponse>(
-    `/api/proxy/portal/team/${id}`,
+    `/portal/team/${id}`,
     payload,
-    {
-      ...mutationConfig,
-      baseURL: "",
-    },
+    mutationConfig,
   );
   return res.data.team_user;
 };
@@ -90,7 +81,7 @@ export const createTeamInvite = async (payload: CreateTeamInviteRequest) => {
 };
 
 export const cancelTeamInvite = async (id: number) => {
-  await proxyDelete(`/api/proxy/portal/team/invites/${id}`);
+  await apiClient.client.delete(`/portal/team/invites/${id}`, mutationConfig);
 };
 
 export type {

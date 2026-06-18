@@ -108,12 +108,9 @@ export const updateRedeemQrcode = async (
   payload: UpdateRedeemQrcodeRequest,
 ) => {
   const res = await apiClient.client.put<RedeemQrcodeDetailResponse>(
-    `/api/proxy/portal/redeem-qrcodes/${id}`,
+    `/portal/redeem-qrcodes/${id}`,
     payload,
-    {
-      ...mutationConfig,
-      baseURL: "",
-    },
+    mutationConfig,
   );
   return res.data.redeem_qrcode;
 };

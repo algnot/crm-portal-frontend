@@ -18,11 +18,35 @@ const extractRewards = (data: {
   join_rewards?: PortalTierReward[];
 }) => data.rewards ?? data.join_rewards ?? [];
 
-const proxyPut = <T>(url: string, data: unknown) =>
-  apiClient.client.put<T>(url, data, {
-    ...tierMutationConfig,
-    baseURL: "",
-  });
+export const updateTier = async (id: number, payload: UpdateTierRequest) => {
+  const res = await apiClient.client.put<TierDetailResponse>(
+    `/portal/tiers/${id}`,
+    payload,
+    tierMutationConfig,
+  );
+  return res.data.tier;
+};
+
+export const updateTierRewards = async (
+  id: number,
+  rewards: TierRewardInput[],
+) => {
+  const res = await apiClient.client.put<TierRewardsResponse>(
+    `/portal/tiers/${id}/rewards`,
+    { rewards },
+    tierMutationConfig,
+  );
+  return extractRewards(res.data);
+};
+
+export const updateJoinRewards = async (rewards: TierRewardInput[]) => {
+  const res = await apiClient.client.put<JoinRewardsResponse>(
+    "/portal/tiers/join-rewards",
+    { join_rewards: rewards },
+    tierMutationConfig,
+  );
+  return extractRewards(res.data);
+};
 
 export const getTiers = async () => {
   const res = await apiClient.client.get<TiersListResponse>("/portal/tiers");
@@ -57,33 +81,6 @@ export const createTier = async (payload: CreateTierRequest) => {
     tierMutationConfig,
   );
   return res.data.tier;
-};
-
-export const updateTier = async (id: number, payload: UpdateTierRequest) => {
-  const res = await proxyPut<TierDetailResponse>(
-    `/api/proxy/portal/tiers/${id}`,
-    payload,
-  );
-  return res.data.tier;
-};
-
-export const updateTierRewards = async (
-  id: number,
-  rewards: TierRewardInput[],
-) => {
-  const res = await proxyPut<TierRewardsResponse>(
-    `/api/proxy/portal/tiers/${id}/rewards`,
-    { rewards },
-  );
-  return extractRewards(res.data);
-};
-
-export const updateJoinRewards = async (rewards: TierRewardInput[]) => {
-  const res = await proxyPut<JoinRewardsResponse>(
-    "/api/proxy/portal/tiers/join-rewards",
-    { join_rewards: rewards },
-  );
-  return extractRewards(res.data);
 };
 
 export const buildTierUpdatePayload = (

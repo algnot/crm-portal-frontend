@@ -113,12 +113,9 @@ export const buildCouponUpdatePayload = (
 
 export const updateCoupon = async (id: number, payload: UpdateCouponRequest) => {
   const res = await apiClient.client.put<CouponDetailResponse>(
-    `/api/proxy/portal/coupons/${id}`,
+    `/portal/coupons/${id}`,
     payload,
-    {
-      ...couponMutationConfig,
-      baseURL: "",
-    },
+    couponMutationConfig,
   );
   return res.data.coupon;
 };

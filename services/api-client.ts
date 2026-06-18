@@ -21,7 +21,7 @@ const parseApiTimeoutMs = () => {
 
 class ApiClient {
   client: AxiosInstance;
-  readonly apiBaseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api`;
+  readonly apiBaseUrl = "/api";
   readonly timeoutMs = parseApiTimeoutMs();
 
   constructor() {
