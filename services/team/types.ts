@@ -1,7 +1,10 @@
+export type PortalRole = "admin" | "operation";
+
 export type PortalTeamUser = {
   id: number;
   name: string;
   email: string;
+  role: PortalRole;
   active: boolean;
   create_date: string;
 };
@@ -26,6 +29,14 @@ export type CreateTeamUserRequest = {
   name: string;
   email: string;
   password: string;
+  role: PortalRole;
+};
+
+export type UpdateTeamUserRequest = {
+  name?: string;
+  role?: PortalRole;
+  active?: boolean;
+  password?: string;
 };
 
 export type InviteState = "pending" | "accepted" | "cancelled" | "expired";
@@ -65,6 +76,7 @@ export type TeamInviteDetailResponse = {
 export type CreateTeamInviteRequest = {
   email: string;
   name: string;
+  role: PortalRole;
 };
 
 export type PublicInvitePartner = {

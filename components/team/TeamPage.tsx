@@ -2,21 +2,24 @@
 
 import CreateInviteModal from "@/components/team/CreateInviteModal";
 import CreateTeamUserModal from "@/components/team/CreateTeamUserModal";
+import EditTeamUserModal from "@/components/team/EditTeamUserModal";
 import Select from "@/components/util/Select";
 import {
   cancelTeamInvite,
   getTeamInvites,
   getTeamUsers,
 } from "@/services/team/team";
-import type { InviteState, PortalTeamInvite } from "@/services/team/types";
+import type { InviteState, PortalTeamInvite, PortalTeamUser } from "@/services/team/types";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
+import { PORTAL_ROLE_LABELS } from "@/utils/roles";
 import {
   ChevronLeft,
   ChevronRight,
   Copy,
   Link2,
+  Pencil,
   Search,
   UserPlus,
   X,
@@ -48,6 +51,7 @@ export default function TeamPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showCreateInvite, setShowCreateInvite] = useState(false);
+  const [editingUser, setEditingUser] = useState<PortalTeamUser | null>(null);
   const [cancellingInviteId, setCancellingInviteId] = useState<number | null>(
     null,
   );
@@ -287,7 +291,7 @@ export default function TeamPage() {
           teamUsers.length === 0 ? (
             <div className="p-6 text-sm text-gray-100">ไม่พบสมาชิกทีม</div>
           ) : (
-            <UsersTable users={teamUsers} />
+            <UsersTable users={teamUsers} onEdit={setEditingUser} />
           )
         ) : invites.length === 0 ? (
           <div className="p-6 text-sm text-gray-100">ไม่พบคำเชิญ</div>
@@ -326,14 +330,24 @@ export default function TeamPage() {
           onSuccess={() => void handleSuccess("สร้างคำเชิญสำเร็จ")}
         />
       ) : null}
+
+      {editingUser ? (
+        <EditTeamUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSuccess={() => void handleSuccess("บันทึกสมาชิกทีมสำเร็จ")}
+        />
+      ) : null}
     </div>
   );
 }
 
 function UsersTable({
   users,
+  onEdit,
 }: {
   users: Awaited<ReturnType<typeof getTeamUsers>>["teamUsers"];
+  onEdit: (user: PortalTeamUser) => void;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -342,8 +356,10 @@ function UsersTable({
           <tr>
             <th className="px-4 py-4 font-medium">ชื่อ</th>
             <th className="px-4 py-4 font-medium">อีเมล</th>
+            <th className="px-4 py-4 font-medium">Role</th>
             <th className="px-4 py-4 font-medium">สถานะ</th>
             <th className="px-4 py-4 font-medium">วันที่สร้าง</th>
+            <th className="px-4 py-4 font-medium" />
           </tr>
         </thead>
         <tbody>
@@ -356,6 +372,9 @@ function UsersTable({
                 {user.name}
               </td>
               <td className="px-4 py-4 text-defualt-text">{user.email}</td>
+              <td className="px-4 py-4 text-defualt-text">
+                {PORTAL_ROLE_LABELS[user.role ?? "admin"]}
+              </td>
               <td className="px-4 py-4">
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -369,6 +388,16 @@ function UsersTable({
               </td>
               <td className="px-4 py-4 text-gray-100">
                 {formatDateTime(user.create_date)}
+              </td>
+              <td className="px-4 py-4">
+                <button
+                  type="button"
+                  onClick={() => onEdit(user)}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5"
+                >
+                  <Pencil className="size-4" />
+                  แก้ไข
+                </button>
               </td>
             </tr>
           ))}

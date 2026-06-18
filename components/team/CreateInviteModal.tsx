@@ -1,9 +1,11 @@
 "use client";
 
 import { createTeamInvite } from "@/services/team/team";
-import type { PortalTeamInvite } from "@/services/team/types";
+import type { PortalRole, PortalTeamInvite } from "@/services/team/types";
+import Select from "@/components/util/Select";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
+import { PORTAL_ROLE_OPTIONS } from "@/utils/roles";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -24,6 +26,7 @@ export default function CreateInviteModal({
   const [isClosing, setIsClosing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<PortalRole>("operation");
   const [createdInvite, setCreatedInvite] = useState<PortalTeamInvite | null>(
     null,
   );
@@ -74,6 +77,7 @@ export default function CreateInviteModal({
       const invite = await createTeamInvite({
         name: name.trim(),
         email: email.trim(),
+        role,
       });
       setCreatedInvite(invite);
       onSuccess();
@@ -173,6 +177,10 @@ export default function CreateInviteModal({
                 className={inputClassName}
                 required
               />
+            </Field>
+
+            <Field label="Role">
+              <Select value={role} options={PORTAL_ROLE_OPTIONS} onChange={setRole} />
             </Field>
 
             {error ? <p className="text-sm text-red-100">{error}</p> : null}

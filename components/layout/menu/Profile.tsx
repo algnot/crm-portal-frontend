@@ -5,6 +5,7 @@ import { Info, ChevronDown, Settings } from "lucide-react";
 import dialog from "@/components/util/dialog";
 import { useApp } from "@/providers/app-provider";
 import { logout } from "@/services/auth/auth";
+import { PORTAL_ROLE_LABELS, getUserRole } from "@/utils/roles";
 import { useEffect, useRef, useState } from "react";
 
 function getInitials(fullName?: string): string {
@@ -79,8 +80,13 @@ export default function Profile() {
       >
         {getInitials(me?.user.name)}
       </div>
-      <div className="text-gray-100 font-medium text-sm truncate max-w-[200px]">
-        {me?.user.name}
+      <div className="min-w-0 text-sm">
+        <div className="truncate font-medium text-gray-100">{me?.user.name}</div>
+        {me ? (
+          <div className="truncate text-xs text-gray-100/80">
+            {PORTAL_ROLE_LABELS[getUserRole(me)]}
+          </div>
+        ) : null}
       </div>
       <button
         type="button"

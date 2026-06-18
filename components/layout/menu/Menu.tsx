@@ -15,6 +15,8 @@ import {
 import MenuItem from "./MenuItem";
 import Profile from "./Profile";
 import { useApp } from "@/providers/app-provider";
+import { canAccessPath, getUserRole } from "@/utils/roles";
+import { useMemo } from "react";
 
 const iconClassName = "size-6 shrink-0";
 
@@ -90,6 +92,11 @@ export default function Menu() {
     },
   ];
 
+  const visibleMenuItems = useMemo(() => {
+    const role = getUserRole(me);
+    return menuItems.filter((item) => canAccessPath(role, item.path));
+  }, [me]);
+
   const handleSidebarToggle = () => {
     if (isMobileOpen) {
       setIsMobileOpen(false);
@@ -146,7 +153,7 @@ export default function Menu() {
         </div>
 
         <div>
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <MenuItem
               key={item.path}
               path={item.path}

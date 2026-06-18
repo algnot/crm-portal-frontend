@@ -10,6 +10,7 @@ import type {
   TeamUserDetailResponse,
   TeamUsersListParams,
   TeamUsersListResponse,
+  UpdateTeamUserRequest,
 } from "./types";
 
 const mutationConfig = { skipErrorAlert: true };
@@ -47,6 +48,21 @@ export const createTeamUser = async (payload: CreateTeamUserRequest) => {
   return res.data.team_user;
 };
 
+export const updateTeamUser = async (
+  id: number,
+  payload: UpdateTeamUserRequest,
+) => {
+  const res = await apiClient.client.put<TeamUserDetailResponse>(
+    `/api/proxy/portal/team/${id}`,
+    payload,
+    {
+      ...mutationConfig,
+      baseURL: "",
+    },
+  );
+  return res.data.team_user;
+};
+
 export const getTeamInvites = async (params: TeamInvitesListParams = {}) => {
   const res = await apiClient.client.get<TeamInvitesListResponse>(
     "/portal/team/invites",
@@ -80,8 +96,10 @@ export const cancelTeamInvite = async (id: number) => {
 export type {
   CreateTeamInviteRequest,
   CreateTeamUserRequest,
+  PortalRole,
   PortalTeamInvite,
   PortalTeamUser,
   TeamInvitesListParams,
   TeamUsersListParams,
+  UpdateTeamUserRequest,
 } from "./types";

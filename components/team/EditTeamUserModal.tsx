@@ -1,15 +1,16 @@
 "use client";
 
-import { createTeamUser } from "@/services/team/team";
-import type { PortalRole } from "@/services/team/types";
+import { updateTeamUser } from "@/services/team/team";
+import type { PortalRole, PortalTeamUser } from "@/services/team/types";
 import Select from "@/components/util/Select";
 import { handleError } from "@/utils/errors";
 import { PORTAL_ROLE_OPTIONS } from "@/utils/roles";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
 
-type CreateTeamUserModalProps = {
+type EditTeamUserModalProps = {
+  user: PortalTeamUser;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -17,17 +18,26 @@ type CreateTeamUserModalProps = {
 const inputClassName =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-brown-100";
 
-export default function CreateTeamUserModal({
+export default function EditTeamUserModal({
+  user,
   onClose,
   onSuccess,
-}: CreateTeamUserModalProps) {
+}: EditTeamUserModalProps) {
   const [isClosing, setIsClosing] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(user.name);
+  const [role, setRole] = useState<PortalRole>(user.role ?? "admin");
+  const [active, setActive] = useState(user.active);
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<PortalRole>("operation");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const activeOptions = useMemo(
+    () => [
+      { value: "true" as const, label: "ใช้งาน" },
+      { value: "false" as const, label: "ปิดใช้งาน" },
+    ],
+    [],
+  );
 
   const closeModal = () => {
     setIsClosing(true);
@@ -51,24 +61,37 @@ export default function CreateTeamUserModal({
     event.preventDefault();
     setError(null);
 
-    if (!name.trim() || !email.trim() || !password) {
-      setError("กรุณากรอกข้อมูลให้ครบ");
+    if (!name.trim()) {
+      setError("กรุณาระบุชื่อ");
       return;
     }
 
-    if (password.length < 8) {
+    if (password && password.length < 8) {
       setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+      return;
+    }
+
+    const payload = {
+      name: name.trim(),
+      role,
+      active,
+      ...(password ? { password } : {}),
+    };
+
+    const hasChanges =
+      payload.name !== user.name ||
+      payload.role !== (user.role ?? "admin") ||
+      payload.active !== user.active ||
+      Boolean(password);
+
+    if (!hasChanges) {
+      closeModal();
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createTeamUser({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        role,
-      });
+      await updateTeamUser(user.id, payload);
       onSuccess();
       closeModal();
     } catch (submitError) {
@@ -98,10 +121,8 @@ export default function CreateTeamUserModal({
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-defualt-text">เพิ่มสมาชิกทีม</h2>
-        <p className="mt-1 text-sm text-gray-100">
-          สร้างบัญชี Portal โดยกำหนดรหัสผ่านให้เลย
-        </p>
+        <h2 className="text-xl font-bold text-defualt-text">แก้ไขสมาชิกทีม</h2>
+        <p className="mt-1 text-sm text-gray-100">{user.email}</p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <Field label="ชื่อ">
@@ -113,28 +134,28 @@ export default function CreateTeamUserModal({
               required
             />
           </Field>
-          <Field label="อีเมล">
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className={inputClassName}
-              required
+
+          <Field label="Role">
+            <Select value={role} options={PORTAL_ROLE_OPTIONS} onChange={setRole} />
+          </Field>
+
+          <Field label="สถานะ">
+            <Select
+              value={active ? "true" : "false"}
+              options={activeOptions}
+              onChange={(value) => setActive(value === "true")}
             />
           </Field>
-          <Field label="รหัสผ่าน">
+
+          <Field label="รหัสผ่านใหม่ (ไม่บังคับ)">
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className={inputClassName}
               minLength={8}
-              required
+              placeholder="เว้นว่างหากไม่เปลี่ยน"
             />
-          </Field>
-
-          <Field label="Role">
-            <Select value={role} options={PORTAL_ROLE_OPTIONS} onChange={setRole} />
           </Field>
 
           {error ? <p className="text-sm text-red-100">{error}</p> : null}
@@ -153,7 +174,7 @@ export default function CreateTeamUserModal({
               disabled={isSubmitting}
               className="w-full cursor-pointer rounded-4xl bg-brown-100 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "กำลังสร้าง..." : "สร้าง"}
+              {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
         </form>

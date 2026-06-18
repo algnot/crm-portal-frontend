@@ -1,5 +1,15 @@
+import type { PortalRole } from "@/services/team/types";
+
+export type { PortalRole } from "@/services/team/types";
+
+export type PortalMeUser = {
+  name: string;
+  email: string;
+  role: PortalRole;
+};
+
 export type PortalMeResponse = {
-  user: { name: string; email: string };
+  user: PortalMeUser;
   partner: { name: string; slug: string; logo_url: string | null };
 };
 
@@ -19,7 +29,7 @@ export type PortalLoginRequest = {
 export type PortalLoginResponse = {
   token: string;
   expires_at: string;
-  user: { name: string; email: string };
+  user: PortalMeUser;
   partner: { name: string; slug: string; logo_url: string | null };
 };
 

@@ -11,9 +11,12 @@ import {
   formatNumber,
   formatPointSource,
   formatPointType,
+  isPointEarn,
+  matchesPointTypeFilter,
+  toApiPointType,
 } from "@/utils/format";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const PAGE_SIZE = 20;
 
@@ -36,6 +39,7 @@ export default function UserPointHistory({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const pointsRequestIdRef = useRef(0);
 
   useEffect(() => {
     void getCurrencies()
@@ -44,6 +48,7 @@ export default function UserPointHistory({
   }, []);
 
   const loadPoints = useCallback(async () => {
+    const requestId = ++pointsRequestIdRef.current;
     setError(null);
     setLoading(true);
 
@@ -52,18 +57,29 @@ export default function UserPointHistory({
         limit: PAGE_SIZE,
         offset,
         currency_id: currencyId === "all" ? undefined : currencyId,
-        type: typeFilter === "all" ? undefined : typeFilter,
+        type:
+          typeFilter === "all" ? undefined : toApiPointType(typeFilter),
       });
+      if (requestId !== pointsRequestIdRef.current) return;
+
       setPoints(data.points);
       setTotal(data.total);
     } catch (loadError) {
+      if (requestId !== pointsRequestIdRef.current) return;
       setError(handleError(loadError).message);
       setPoints([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (requestId === pointsRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [currencyId, offset, typeFilter, userId]);
+
+  const visiblePoints = useMemo(() => {
+    if (typeFilter === "all") return points;
+    return points.filter((point) => matchesPointTypeFilter(point.type, typeFilter));
+  }, [points, typeFilter]);
 
   useEffect(() => {
     void loadPoints();
@@ -108,12 +124,18 @@ export default function UserPointHistory({
           <Select
             value={currencyId}
             options={currencyOptions}
-            onChange={setCurrencyId}
+            onChange={(value) => {
+              setCurrencyId(value);
+              setOffset(0);
+            }}
           />
           <Select
             value={typeFilter}
             options={typeOptions}
-            onChange={setTypeFilter}
+            onChange={(value) => {
+              setTypeFilter(value);
+              setOffset(0);
+            }}
           />
         </div>
       </div>
@@ -125,7 +147,7 @@ export default function UserPointHistory({
           </div>
         ) : error ? (
           <p className="text-sm text-red-100">{error}</p>
-        ) : points.length === 0 ? (
+        ) : visiblePoints.length === 0 ? (
           <p className="text-sm text-gray-100">ไม่มีประวัติ point</p>
         ) : (
           <div className="overflow-x-auto">
@@ -141,7 +163,7 @@ export default function UserPointHistory({
                 </tr>
               </thead>
               <tbody>
-                {points.map((point) => (
+                {visiblePoints.map((point) => (
                   <tr
                     key={point.id}
                     className="border-b border-gray-200 last:border-b-0"
@@ -165,7 +187,7 @@ export default function UserPointHistory({
                     <td className="px-3 py-3">
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                          point.type === "earn"
+                          isPointEarn(point.type)
                             ? "bg-brown-yellow-5 text-brown-100"
                             : "bg-gray-10 text-gray-100"
                         }`}
@@ -178,10 +200,10 @@ export default function UserPointHistory({
                     </td>
                     <td
                       className={`px-3 py-3 text-right font-semibold ${
-                        point.type === "earn" ? "text-brown-100" : "text-red-100"
+                        isPointEarn(point.type) ? "text-brown-100" : "text-red-100"
                       }`}
                     >
-                      {point.type === "earn" ? "+" : "-"}
+                      {isPointEarn(point.type) ? "+" : "-"}
                       {formatNumber(point.value)}
                     </td>
                   </tr>

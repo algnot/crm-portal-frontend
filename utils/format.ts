@@ -45,8 +45,26 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 
 const POINT_TYPE_LABELS: Record<string, string> = {
   earn: "เพิ่ม",
+  burn: "ลด",
   spend: "ลด",
 };
+
+export function isPointEarn(type: string) {
+  return type === "earn";
+}
+
+export function toApiPointType(type: "earn" | "spend" | "burn") {
+  return type === "earn" ? "earn" : "burn";
+}
+
+export function matchesPointTypeFilter(
+  pointType: string,
+  filter: "all" | "earn" | "spend",
+) {
+  if (filter === "all") return true;
+  if (filter === "earn") return pointType === "earn";
+  return pointType === "burn" || pointType === "spend";
+}
 
 export function formatPointSource(kind: string) {
   return POINT_SOURCE_LABELS[kind] ?? kind;

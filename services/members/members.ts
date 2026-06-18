@@ -43,17 +43,24 @@ export const adjustUserPoint = async (
 
 export const getUserPoints = async (
   id: number,
-  params: UserPointsListParams = {},
+  query: UserPointsListParams = {},
 ) => {
+  const requestParams: Record<string, string | number> = {
+    limit: query.limit ?? 20,
+    offset: query.offset ?? 0,
+  };
+
+  if (query.currency_id !== undefined) {
+    requestParams.currency_id = query.currency_id;
+  }
+  if (query.type !== undefined) {
+    requestParams.type = query.type;
+  }
+
   const res = await apiClient.client.get<UserPointsListResponse>(
     `/portal/users/${id}/points`,
     {
-      params: {
-        limit: params.limit ?? 20,
-        offset: params.offset ?? 0,
-        ...(params.currency_id ? { currency_id: params.currency_id } : {}),
-        ...(params.type ? { type: params.type } : {}),
-      },
+      params: requestParams,
     },
   );
   return res.data;

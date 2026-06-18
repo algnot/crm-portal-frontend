@@ -4,11 +4,12 @@ import { FormEvent, useEffect, useState } from "react";
 import { useApp } from "@/providers/app-provider";
 import { login } from "@/services/auth/auth";
 import { handleError } from "@/utils/errors";
+import { getDefaultDashboardPath } from "@/utils/roles";
 
 const PARTNER_DOMAIN_KEY = "partner_domain";
 
 export default function LoginForm() {
-  const { authStatus } = useApp();
+  const { authStatus, me } = useApp();
   const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,10 +24,10 @@ export default function LoginForm() {
   }, []);
 
   useEffect(() => {
-    if (authStatus === "authenticated") {
-      window.location.replace("/dashboard");
+    if (authStatus === "authenticated" && me) {
+      window.location.replace(getDefaultDashboardPath(me.user.role));
     }
-  }, [authStatus]);
+  }, [authStatus, me]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,13 +42,13 @@ export default function LoginForm() {
     setIsSubmitting(true);
 
     try {
-      await login({
+      const result = await login({
         domain: trimmedDomain,
         email,
         password,
       });
       window.localStorage.setItem(PARTNER_DOMAIN_KEY, trimmedDomain);
-      window.location.replace("/dashboard");
+      window.location.replace(getDefaultDashboardPath(result.user.role));
       return;
     } catch (submitError) {
       setError(handleError(submitError).message);

@@ -6,7 +6,7 @@ import { getCurrencies } from "@/services/currencies/currencies";
 import type { PortalCurrency } from "@/services/currencies/types";
 import Select from "@/components/util/Select";
 import { handleError } from "@/utils/errors";
-import { formatNumber } from "@/utils/format";
+import { formatNumber, toApiPointType } from "@/utils/format";
 import { useEffect, useMemo, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
@@ -156,7 +156,7 @@ export default function AdjustPointModal({
     try {
       await adjustUserPoint(user.id, {
         value: parsedValue,
-        type,
+        type: toApiPointType(type),
         note: note.trim(),
         currency_id: currencyId,
       });

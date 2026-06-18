@@ -4,6 +4,7 @@ import { acceptInvite, getPublicInvite } from "@/services/auth/auth";
 import type { PublicInvite } from "@/services/team/types";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
+import { getDefaultDashboardPath } from "@/utils/roles";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -68,7 +69,7 @@ export default function InviteAcceptPage() {
         password,
       });
       window.localStorage.setItem("partner_domain", result.partner.slug);
-      window.location.replace("/dashboard");
+      window.location.replace(getDefaultDashboardPath(result.user.role));
     } catch (submitError) {
       setError(handleError(submitError).message);
       setIsSubmitting(false);

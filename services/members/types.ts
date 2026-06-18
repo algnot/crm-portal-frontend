@@ -39,7 +39,7 @@ export type UserDetailResponse = {
 
 export type AdjustPointRequest = {
   value: number;
-  type: "earn" | "spend";
+  type: "earn" | "burn";
   note: string;
   currency_id: number;
 };
@@ -74,7 +74,7 @@ export type PortalPointRecord = {
   id: number;
   name: string;
   value: number;
-  type: "earn" | "spend" | string;
+  type: "earn" | "burn" | string;
   admin_note: string | false;
   given_date: string;
   expiration_date: string | false;
@@ -93,7 +93,7 @@ export type UserPointsListResponse = {
 
 export type UserPointsListParams = {
   currency_id?: number;
-  type?: "earn" | "spend";
+  type?: "earn" | "burn";
   limit?: number;
   offset?: number;
 };
