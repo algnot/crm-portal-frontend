@@ -1,6 +1,7 @@
 "use client";
 
 import RedeemQrcodeFormModal from "@/components/redeem-qrcodes/RedeemQrcodeFormModal";
+import ActionMenu from "@/components/util/ActionMenu";
 import Select from "@/components/util/Select";
 import {
   getRedeemQrcode,
@@ -225,17 +226,20 @@ export default function RedeemQrcodesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => void openEditModal(qrcode.id)}
-                        disabled={editingQrcodeId === qrcode.id}
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Pencil className="size-4" />
-                        {editingQrcodeId === qrcode.id
-                          ? "กำลังโหลด..."
-                          : "แก้ไข"}
-                      </button>
+                      <ActionMenu
+                        ariaLabel={`ตัวเลือก Redeem QR ${qrcode.name}`}
+                        items={[
+                          {
+                            label:
+                              editingQrcodeId === qrcode.id
+                                ? "กำลังโหลด..."
+                                : "แก้ไข",
+                            icon: <Pencil className="size-4" />,
+                            disabled: editingQrcodeId === qrcode.id,
+                            onClick: () => void openEditModal(qrcode.id),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

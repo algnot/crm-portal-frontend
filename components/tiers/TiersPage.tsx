@@ -2,6 +2,7 @@
 
 import TierFormModal from "@/components/tiers/TierFormModal";
 import JoinRewardsModal from "@/components/tiers/JoinRewardsModal";
+import ActionMenu from "@/components/util/ActionMenu";
 import { getTier, getTiers } from "@/services/tiers/tiers";
 import type { PortalTier } from "@/services/tiers/types";
 import { handleError } from "@/utils/errors";
@@ -166,15 +167,20 @@ export default function TiersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => void openEditModal(tier.id)}
-                        disabled={editingTierId === tier.id}
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Pencil className="size-4" />
-                        {editingTierId === tier.id ? "กำลังโหลด..." : "แก้ไข"}
-                      </button>
+                      <ActionMenu
+                        ariaLabel={`ตัวเลือกระดับ ${tier.name}`}
+                        items={[
+                          {
+                            label:
+                              editingTierId === tier.id
+                                ? "กำลังโหลด..."
+                                : "แก้ไข",
+                            icon: <Pencil className="size-4" />,
+                            disabled: editingTierId === tier.id,
+                            onClick: () => void openEditModal(tier.id),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

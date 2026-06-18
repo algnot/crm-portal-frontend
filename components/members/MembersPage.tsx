@@ -1,5 +1,6 @@
 "use client";
 
+import ActionMenu from "@/components/util/ActionMenu";
 import { getUsers } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
 import { handleError } from "@/utils/errors";
@@ -8,13 +9,14 @@ import {
   formatNumber,
   getDefaultPointBalance,
 } from "@/utils/format";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import Link from "next/link";
+import { ChevronLeft, ChevronRight, Eye, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const PAGE_SIZE = 20;
 
 export default function MembersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<PortalUser[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -157,12 +159,17 @@ export default function MembersPage() {
                       {user.create_date}
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/dashboard/members/${user.id}`}
-                        className="rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5"
-                      >
-                        ดูรายละเอียด
-                      </Link>
+                      <ActionMenu
+                        ariaLabel={`ตัวเลือกสมาชิก ${user.name}`}
+                        items={[
+                          {
+                            label: "ดูรายละเอียด",
+                            icon: <Eye className="size-4" />,
+                            onClick: () =>
+                              router.push(`/dashboard/members/${user.id}`),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

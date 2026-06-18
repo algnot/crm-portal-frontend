@@ -240,12 +240,14 @@ export default function RedeemQrcodeFormModal({
         }
         const updated = await updateRedeemQrcode(qrcode.id, updatePayload);
         setDisplayQrcode(updated);
+        onSuccess();
+        closeModal();
       } else {
         const created = await createRedeemQrcode(payload);
         setDisplayQrcode(created);
         setShowCreateResult(true);
+        onSuccess();
       }
-      onSuccess();
     } catch (submitError) {
       setError(handleError(submitError).message);
     } finally {
