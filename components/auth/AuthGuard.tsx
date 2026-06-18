@@ -2,6 +2,7 @@
 
 import { useApp } from "@/providers/app-provider";
 import { redirectToLogin } from "@/services/api-client";
+import { DashboardShellSkeleton } from "@/components/util/Skeleton";
 import { useEffect, useRef } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -25,7 +26,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (authStatus === "loading" && !me) {
-    return null;
+    return <DashboardShellSkeleton />;
   }
 
   return children;

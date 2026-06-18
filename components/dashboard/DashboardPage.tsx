@@ -18,7 +18,7 @@ import {
 } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -130,7 +130,7 @@ function ChartContainer({ children }: { children: React.ReactElement }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasSize, setHasSize] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = containerRef.current;
     if (!element) return;
 
@@ -146,7 +146,7 @@ function ChartContainer({ children }: { children: React.ReactElement }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="h-full w-full min-h-0 min-w-0">
+    <div ref={containerRef} className="h-full w-full min-h-[288px] min-w-0">
       {hasSize ? (
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           {children}
@@ -232,6 +232,50 @@ function DashboardChartsSkeleton() {
   );
 }
 
+function normalizeDashboardResponse(
+  response: DashboardResponse,
+): DashboardResponse {
+  return {
+    date_from: response.date_from ?? "",
+    date_to: response.date_to ?? "",
+    granularity: response.granularity ?? "day",
+    members_by_tier: response.members_by_tier ?? [],
+    user_registrations: response.user_registrations ?? [],
+    user_registrations_by_hour: response.user_registrations_by_hour ?? [],
+    receipt_amounts: response.receipt_amounts ?? [],
+    coupons_by_name: response.coupons_by_name ?? [],
+    points: {
+      currency: {
+        id: response.points?.currency?.id ?? 0,
+        name: response.points?.currency?.name ?? "Point",
+        code: response.points?.currency?.code,
+      },
+      series: response.points?.series ?? [],
+    },
+  };
+}
+
+function DashboardLoadError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm">
+      <p className="text-sm text-gray-100">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-4 cursor-pointer rounded-4xl bg-brown-100 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80"
+      >
+        ลองโหลดอีกครั้ง
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
@@ -239,29 +283,37 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const loadDashboard = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setError(null);
     setLoading(true);
 
     try {
-      const response = await getDashboard({
-        date_from: toApiDateStartFromDateInput(dateFrom),
-        date_to: toApiDateEndFromDateInput(dateTo),
-        granularity,
-      });
+      const response = normalizeDashboardResponse(
+        await getDashboard({
+          date_from: toApiDateStartFromDateInput(dateFrom),
+          date_to: toApiDateEndFromDateInput(dateTo),
+          granularity,
+        }),
+      );
+      if (requestId !== requestIdRef.current) return;
       setData(response);
     } catch (loadError) {
+      if (requestId !== requestIdRef.current) return;
       setError(handleError(loadError).message);
-      setData(null);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [dateFrom, dateTo, granularity]);
 
   useEffect(() => {
     void loadDashboard();
-  }, [loadDashboard]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const membersByTier = useMemo(
     () =>
@@ -364,6 +416,10 @@ export default function DashboardPage() {
     return peak.count > 0 ? peak.hour : null;
   }, [hourlyData]);
 
+  const isInitialLoading = loading && !data;
+  const isRefreshing = loading && Boolean(data);
+  const pointsCurrencyName = data?.points.currency.name ?? "Point";
+
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
@@ -411,8 +467,8 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => void loadDashboard()}
-              disabled={loading}
               className="w-full cursor-pointer rounded-4xl bg-brown-100 px-4 py-3 text-sm font-medium text-white transition hover:bg-brown-100/80 disabled:cursor-not-allowed disabled:opacity-60"
+              aria-busy={loading}
             >
               {loading ? "กำลังโหลด..." : "อัปเดตข้อมูล"}
             </button>
@@ -426,10 +482,12 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {loading ? (
+      {isInitialLoading ? (
         <DashboardChartsSkeleton />
       ) : data ? (
-        <div className="space-y-6">
+        <div
+          className={`space-y-6 transition-opacity duration-200${isRefreshing ? " opacity-60" : ""}`}
+        >
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label="สมาชิกทั้งหมด"
@@ -447,7 +505,7 @@ export default function DashboardPage() {
               hint="ยอดใบเสร็จอนุมัติในช่วงที่เลือก"
             />
             <KpiCard
-              label={`การใช้ ${data.points.currency.name}`}
+              label={`การใช้ ${pointsCurrencyName}`}
               value={`+${formatNumber(kpis.pointsEarned)} / -${formatNumber(kpis.pointsUsed)}`}
               hint="ได้รับ / ใช้ไป"
             />
@@ -703,7 +761,7 @@ export default function DashboardPage() {
             </ChartCard>
 
             <ChartCard
-              title={`การใช้ ${data.points.currency.name}`}
+              title={`การใช้ ${pointsCurrencyName}`}
               description="เปรียบเทียบแต้มที่ได้รับกับที่ใช้ไปในช่วงเดียวกัน"
             >
               {pointsData.some((item) => item.earned > 0 || item.used > 0) ? (
@@ -737,7 +795,12 @@ export default function DashboardPage() {
             </ChartCard>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <DashboardLoadError
+          message={error ?? "ไม่สามารถโหลดข้อมูลแดชบอร์ดได้"}
+          onRetry={() => void loadDashboard()}
+        />
+      )}
     </div>
   );
 }

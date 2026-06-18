@@ -4,7 +4,6 @@ import { clearToken, getToken, syncToken } from "@/services/api-client";
 import { handleError } from "@/utils/errors";
 import { getMe, type PortalMeResponse } from "@/services/auth/auth";
 import DialogHost from "@/components/util/DialogHost";
-import { DashboardShellSkeleton } from "@/components/util/Skeleton";
 import {
   createContext,
   useCallback,
@@ -24,14 +23,6 @@ type AppContextValue = {
   fetchMe: () => Promise<PortalMeResponse | null>;
 };
 
-const FullLoading = () => {
-  return (
-    <div className="fixed inset-0 z-70 bg-gray-10">
-      <DashboardShellSkeleton />
-    </div>
-  );
-};
-
 const AppContext = createContext<AppContextValue | null>(null);
 
 export default function AppProvider({
@@ -39,7 +30,6 @@ export default function AppProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [isMounted, setIsMounted] = useState(false);
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
   const [me, setMe] = useState<PortalMeResponse | null>(null);
   const meRef = useRef<PortalMeResponse | null>(null);
@@ -74,7 +64,6 @@ export default function AppProvider({
   }, []);
 
   useEffect(() => {
-    setIsMounted(true);
     syncToken();
     void fetchMe();
   }, [fetchMe]);
@@ -99,11 +88,8 @@ export default function AppProvider({
     [authStatus, fetchMe, me],
   );
 
-  const showLoading = isMounted && authStatus === "loading" && !me;
-
   return (
     <AppContext.Provider value={value}>
-      {showLoading ? <FullLoading /> : null}
       {children}
       <DialogHost />
     </AppContext.Provider>
