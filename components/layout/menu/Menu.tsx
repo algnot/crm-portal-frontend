@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Menu as MenuIcon,
   QrCode,
+  Receipt,
   Ticket,
   Users,
 } from "lucide-react";
@@ -60,6 +61,11 @@ export default function Menu() {
       icon: <Users className={iconClassName} />,
       label: "รายชื่อสมาชิก",
       path: "/dashboard/members",
+    },
+    {
+      icon: <Receipt className={iconClassName} />,
+      label: "ตรวจสอบใบเสร็จ",
+      path: "/dashboard/receipts",
     },
     {
       icon: <BadgeCheck className={iconClassName} />,
