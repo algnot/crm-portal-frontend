@@ -60,7 +60,7 @@ export default function LoginForm() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-defualt-text">
-            CRM Portal
+            BOPP CRM Portal
           </h1>
           <p className="mt-2 text-sm text-gray-100">เข้าสู่ระบบเพื่อใช้งาน</p>
         </div>
