@@ -1,13 +1,18 @@
 "use client";
 
+import CouponAddCodesModal from "@/components/coupons/CouponAddCodesModal";
 import CouponFormModal from "@/components/coupons/CouponFormModal";
 import CouponRedemptionsModal from "@/components/coupons/CouponRedemptionsModal";
-import { getCoupon, getCoupons } from "@/services/coupons/coupons";
+import {
+  exportCouponCodes,
+  getCoupon,
+  getCoupons,
+} from "@/services/coupons/coupons";
 import type { PortalCoupon } from "@/services/coupons/types";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
-import { History, Pencil, Plus } from "lucide-react";
+import { Download, History, Pencil, Plus, TicketPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function CouponsPage() {
@@ -20,6 +25,12 @@ export default function CouponsPage() {
   );
   const [editingCouponId, setEditingCouponId] = useState<number | null>(null);
   const [redemptionsCoupon, setRedemptionsCoupon] = useState<PortalCoupon | null>(
+    null,
+  );
+  const [addCodesCoupon, setAddCodesCoupon] = useState<PortalCoupon | null>(
+    null,
+  );
+  const [exportingCouponId, setExportingCouponId] = useState<number | null>(
     null,
   );
 
@@ -66,6 +77,24 @@ export default function CouponsPage() {
     setSuccessMessage("บันทึกคูปองสำเร็จ");
     await loadCoupons();
     setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleAddCodesSuccess = async (addedCount: number) => {
+    setSuccessMessage(`เพิ่มโค้ดสำเร็จ ${formatNumber(addedCount)} รายการ`);
+    await loadCoupons();
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleExportCodes = async (coupon: PortalCoupon) => {
+    setExportingCouponId(coupon.id);
+    setError(null);
+    try {
+      await exportCouponCodes(coupon.id, coupon.name);
+    } catch (exportError) {
+      setError(handleError(exportError).message);
+    } finally {
+      setExportingCouponId(null);
+    }
   };
 
   return (
@@ -157,7 +186,9 @@ export default function CouponsPage() {
                     <td className="px-4 py-4 text-defualt-text">
                       <div>{formatDateTime(coupon.start_time)}</div>
                       <div className="text-gray-100">
-                        {formatDateTime(coupon.end_time)}
+                        {coupon.end_time
+                          ? formatDateTime(coupon.end_time)
+                          : "ไม่จำกัด"}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-defualt-text">
@@ -181,6 +212,25 @@ export default function CouponsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAddCodesCoupon(coupon)}
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-gray-200 px-4 py-2 text-sm font-medium text-defualt-text transition hover:bg-gray-10"
+                        >
+                          <TicketPlus className="size-4" />
+                          เพิ่มโค้ด
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleExportCodes(coupon)}
+                          disabled={exportingCouponId === coupon.id}
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-gray-200 px-4 py-2 text-sm font-medium text-defualt-text transition hover:bg-gray-10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Download className="size-4" />
+                          {exportingCouponId === coupon.id
+                            ? "กำลังส่งออก..."
+                            : "ส่งออกโค้ด"}
+                        </button>
                         <button
                           type="button"
                           onClick={() => setRedemptionsCoupon(coupon)}
@@ -223,6 +273,14 @@ export default function CouponsPage() {
           couponId={redemptionsCoupon.id}
           couponName={redemptionsCoupon.name}
           onClose={() => setRedemptionsCoupon(null)}
+        />
+      ) : null}
+
+      {addCodesCoupon ? (
+        <CouponAddCodesModal
+          coupon={addCodesCoupon}
+          onClose={() => setAddCodesCoupon(null)}
+          onSuccess={handleAddCodesSuccess}
         />
       ) : null}
     </div>

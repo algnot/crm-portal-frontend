@@ -1,5 +1,11 @@
 import apiClient from "@/services/api-client";
+import {
+  downloadBlob,
+  getFilenameFromContentDisposition,
+} from "@/utils/file";
 import type {
+  AddCouponCodesRequest,
+  AddCouponCodesResponse,
   CouponDetailResponse,
   CouponRedemptionsParams,
   CouponRedemptionsResponse,
@@ -68,8 +74,8 @@ export const buildCouponUpdatePayload = (
     payload.start_time = next.start_time;
   }
   if (next.end_time !== undefined) {
-    const originalEnd = original.end_time || "";
-    const nextEnd = next.end_time || "";
+    const originalEnd = original.end_time || false;
+    const nextEnd = next.end_time || false;
     if (nextEnd !== originalEnd) payload.end_time = next.end_time;
   }
   if (
@@ -117,7 +123,53 @@ export const updateCoupon = async (id: number, payload: UpdateCouponRequest) => 
   return res.data.coupon;
 };
 
+export const addCouponCodes = async (
+  id: number,
+  payload: AddCouponCodesRequest,
+) => {
+  const res = await apiClient.client.post<AddCouponCodesResponse>(
+    `/portal/coupons/${id}/codes`,
+    payload,
+    couponMutationConfig,
+  );
+  return res.data;
+};
+
+export const exportCouponCodes = async (id: number, couponName: string) => {
+  const res = await apiClient.client.get<Blob>(
+    `/portal/coupons/${id}/codes/export`,
+    {
+      responseType: "blob",
+      ...couponMutationConfig,
+    },
+  );
+
+  const filename = getFilenameFromContentDisposition(
+    res.headers["content-disposition"],
+    `coupon_${id}_codes.csv`,
+  );
+  downloadBlob(res.data, filename || `coupon_${couponName}_codes.csv`);
+};
+
+export const downloadCouponCodesImportTemplate = async () => {
+  const res = await apiClient.client.get<Blob>(
+    "/portal/coupons/codes/import-template",
+    {
+      responseType: "blob",
+      ...couponMutationConfig,
+    },
+  );
+
+  const filename = getFilenameFromContentDisposition(
+    res.headers["content-disposition"],
+    "coupon_code_import_template.csv",
+  );
+  downloadBlob(res.data, filename);
+};
+
 export type {
+  AddCouponCodesRequest,
+  AddCouponCodesResponse,
   CouponRedemption,
   CouponRedemptionSummary,
   CouponRedemptionsParams,

@@ -129,3 +129,26 @@ export type UpdateCouponRequest = Partial<{
   image: string;
   image_base64: string;
 }>;
+
+export type AddCouponCodesGenerateRequest = {
+  add_source: "generate";
+  code_quantity: number;
+  random_range: number;
+  prefix_code?: string;
+  suffix_code?: string;
+};
+
+export type AddCouponCodesImportRequest = {
+  add_source: "import";
+  import_file: string;
+  import_filename: string;
+};
+
+export type AddCouponCodesRequest =
+  | AddCouponCodesGenerateRequest
+  | AddCouponCodesImportRequest;
+
+export type AddCouponCodesResponse = {
+  coupon: PortalCoupon;
+  added_code_count: number;
+};

@@ -3,6 +3,7 @@
 import {
   buildCouponUpdatePayload,
   createCoupon,
+  downloadCouponCodesImportTemplate,
   updateCoupon,
   type CreateCouponRequest,
   type PortalCoupon,
@@ -17,7 +18,6 @@ import { useEffect, useMemo, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
 const MAX_CODE_BATCH = 2000;
-const COUPON_CSV_TEMPLATE_PATH = "/coupon_code_import_template.csv";
 const COUPON_CSV_TEMPLATE_PREVIEW = `code
 example_code_1
 example_code_2`;
@@ -104,6 +104,7 @@ export default function CouponFormModal({
     coupon ? toFormState(coupon) : emptyForm(),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -256,6 +257,18 @@ export default function CouponFormModal({
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    setIsDownloadingTemplate(true);
+    setError(null);
+    try {
+      await downloadCouponCodesImportTemplate();
+    } catch (downloadError) {
+      setError(handleError(downloadError).message);
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -324,7 +337,7 @@ export default function CouponFormModal({
           prefix_code: form.prefixCode.trim() || undefined,
           suffix_code: form.suffixCode.trim() || undefined,
           start_time: startTime,
-          end_time: endTime,
+          ...(endTime ? { end_time: endTime } : {}),
           code_expiry_interval: codeExpiryInterval || undefined,
           term_and_condition: form.termAndCondition.trim() || undefined,
           is_show_in_ui: form.isShowInUi,
@@ -346,7 +359,7 @@ export default function CouponFormModal({
           import_file: importFileBase64,
           import_filename: form.importFilename,
           start_time: startTime,
-          end_time: endTime,
+          ...(endTime ? { end_time: endTime } : {}),
           code_expiry_interval: codeExpiryInterval || undefined,
           term_and_condition: form.termAndCondition.trim() || undefined,
           is_show_in_ui: form.isShowInUi,
@@ -494,7 +507,7 @@ export default function CouponFormModal({
                 />
               </Field>
 
-              <Field label="วันสิ้นสุด">
+              <Field label="วันสิ้นสุด (ไม่บังคับ)">
                 <input
                   type="datetime-local"
                   value={form.endTime}
@@ -503,6 +516,9 @@ export default function CouponFormModal({
                   }
                   className={inputClassName}
                 />
+                <p className="mt-1 text-xs text-gray-100">
+                  เว้นว่าง = ไม่มีวันหมดอายุ
+                </p>
               </Field>
 
               <Field label="อายุโค้ด (นาที)">
@@ -600,13 +616,16 @@ export default function CouponFormModal({
                             ตามตัวอย่างด้านล่าง
                           </p>
                         </div>
-                        <a
-                          href={COUPON_CSV_TEMPLATE_PATH}
-                          download="coupon_code_import_template.csv"
-                          className="inline-flex shrink-0 items-center justify-center rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5"
+                        <button
+                          type="button"
+                          disabled={isDownloadingTemplate}
+                          onClick={() => void handleDownloadTemplate()}
+                          className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          ดาวน์โหลด template
-                        </a>
+                          {isDownloadingTemplate
+                            ? "กำลังดาวน์โหลด..."
+                            : "ดาวน์โหลด template"}
+                        </button>
                       </div>
                       <pre className="mt-3 overflow-x-auto rounded-lg bg-white px-4 py-3 font-mono text-xs text-defualt-text">
                         {COUPON_CSV_TEMPLATE_PREVIEW}
