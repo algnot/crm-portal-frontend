@@ -7,14 +7,27 @@ declare module "axios" {
   }
 }
 
+const DEFAULT_API_TIMEOUT_MS = 30_000;
+
+const parseApiTimeoutMs = () => {
+  const raw = process.env.NEXT_PUBLIC_API_TIMEOUT_MS;
+  if (!raw) return DEFAULT_API_TIMEOUT_MS;
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_API_TIMEOUT_MS;
+};
+
 class ApiClient {
   client: AxiosInstance;
   readonly apiBaseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api`;
+  readonly timeoutMs = parseApiTimeoutMs();
 
   constructor() {
     this.client = axios.create({
       baseURL: this.apiBaseUrl,
-      timeout: 10000,
+      timeout: this.timeoutMs,
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

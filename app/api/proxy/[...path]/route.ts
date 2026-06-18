@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+const DEFAULT_PROXY_TIMEOUT_MS = 30_000;
+
+const getProxyTimeoutMs = () => {
+  const raw = process.env.API_PROXY_TIMEOUT_MS ?? process.env.NEXT_PUBLIC_API_TIMEOUT_MS;
+  if (!raw) return DEFAULT_PROXY_TIMEOUT_MS;
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_PROXY_TIMEOUT_MS;
+};
 
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
@@ -51,12 +62,33 @@ async function proxyRequest(request: NextRequest, path: string[]) {
       ? undefined
       : await request.arrayBuffer();
 
-  const response = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body,
-    redirect: "manual",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body,
+      redirect: "manual",
+      signal: AbortSignal.timeout(getProxyTimeoutMs()),
+    });
+  } catch (error) {
+    const isTimeout =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+
+    if (isTimeout) {
+      return NextResponse.json(
+        {
+          error: "gateway_timeout",
+          message: "Backend request timed out. Please try again.",
+        },
+        { status: 504 },
+      );
+    }
+
+    throw error;
+  }
 
   const responseHeaders = new Headers();
   response.headers.forEach((value, key) => {

@@ -42,9 +42,11 @@ export function handleError(error: unknown): AppError {
         ? "Request timed out. Please try again."
         : !error.response
           ? "Network error. Please check your connection."
-          : status && status >= 500
-            ? "เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้ง"
-            : `Request failed with status ${status}.`);
+          : status === 504
+            ? "เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่อีกครั้ง"
+            : status && status >= 500
+              ? "เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้ง"
+              : `Request failed with status ${status}.`);
 
     return { message, status, raw: error };
   }
