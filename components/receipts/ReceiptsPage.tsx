@@ -139,7 +139,7 @@ export default function ReceiptsPage() {
         ทั้งหมด {formatNumber(total)} รายการ
       </p>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
           <div className="flex min-h-[280px] items-center justify-center">
             <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
@@ -149,93 +149,86 @@ export default function ReceiptsPage() {
         ) : receipts.length === 0 ? (
           <div className="p-6 text-sm text-gray-100">ไม่พบใบเสร็จ</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-gray-200 bg-gray-10 text-gray-100">
-                <tr>
-                  <th className="px-4 py-4 font-medium">เลขใบเสร็จ</th>
-                  <th className="px-4 py-4 font-medium">สมาชิก</th>
-                  <th className="px-4 py-4 font-medium">มูลค่า</th>
-                  <th className="px-4 py-4 font-medium">Reward Point</th>
-                  <th className="px-4 py-4 font-medium">ระดับ</th>
-                  <th className="px-4 py-4 font-medium">สถานะ</th>
-                  <th className="px-4 py-4 font-medium">วันที่ส่ง</th>
-                  <th className="px-4 py-4 font-medium" />
-                </tr>
-              </thead>
-              <tbody>
-                {receipts.map((receipt) => (
-                  <tr
-                    key={receipt.id}
-                    className="border-b border-gray-200 last:border-b-0"
-                  >
-                    <td className="px-4 py-4 font-medium text-defualt-text">
-                      {receipt.receipt_number}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        {receipt.user.picture_url ? (
-                          <img
-                            src={String(receipt.user.picture_url)}
-                            alt={receipt.user.display_name}
-                            className="size-9 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex size-9 items-center justify-center rounded-full bg-brown-100 text-xs font-medium text-white">
-                            {receipt.user.display_name.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <Link
-                            href={`/dashboard/members/${receipt.user.id}`}
-                            className="font-medium text-defualt-text hover:text-brown-100"
-                          >
-                            {receipt.user.display_name}
-                          </Link>
-                          <p className="text-xs text-gray-100">
-                            {displayValue(receipt.user.line_user_id)}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-defualt-text">
-                      {formatNumber(receipt.amount)} บาท
-                    </td>
-                    <td className="px-4 py-4 font-medium text-brown-100">
-                      {formatNumber(receipt.reward_points)}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="rounded-full bg-brown-yellow-5 px-3 py-1 text-xs font-medium text-brown-100">
-                        {receipt.tier.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <StateBadge state={receipt.state} />
-                    </td>
-                    <td className="px-4 py-4 text-gray-100">
-                      {formatDateTime(
-                        receipt.submitted_date ?? receipt.create_date,
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedReceiptId(receipt.id)}
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5"
-                      >
-                        <Eye className="size-4" />
-                        {receipt.state === "pending" ? "ตรวจสอบ" : "ดูรายละเอียด"}
-                      </button>
-                    </td>
+          <>
+            <div className="divide-y divide-gray-200 lg:hidden">
+              {receipts.map((receipt) => (
+                <ReceiptCard
+                  key={receipt.id}
+                  receipt={receipt}
+                  onOpen={() => setSelectedReceiptId(receipt.id)}
+                />
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[900px] text-left text-sm">
+                <thead className="border-b border-gray-200 bg-gray-10 text-gray-100">
+                  <tr>
+                    <th className="px-4 py-4 font-medium">เลขใบเสร็จ</th>
+                    <th className="min-w-[200px] px-4 py-4 font-medium">
+                      สมาชิก
+                    </th>
+                    <th className="px-4 py-4 font-medium whitespace-nowrap">
+                      มูลค่า
+                    </th>
+                    <th className="px-4 py-4 font-medium whitespace-nowrap">
+                      Reward Point
+                    </th>
+                    <th className="px-4 py-4 font-medium">ระดับ</th>
+                    <th className="px-4 py-4 font-medium">สถานะ</th>
+                    <th className="px-4 py-4 font-medium whitespace-nowrap">
+                      วันที่ส่ง
+                    </th>
+                    <th className="px-4 py-4 font-medium" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {receipts.map((receipt) => (
+                    <tr
+                      key={receipt.id}
+                      className="border-b border-gray-200 last:border-b-0"
+                    >
+                      <td className="max-w-[120px] truncate px-4 py-4 font-medium text-defualt-text">
+                        {receipt.receipt_number}
+                      </td>
+                      <td className="px-4 py-4">
+                        <MemberCell user={receipt.user} />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-defualt-text">
+                        {formatNumber(receipt.amount)} บาท
+                      </td>
+                      <td className="px-4 py-4 font-medium whitespace-nowrap text-brown-100">
+                        {formatNumber(receipt.reward_points)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="inline-block max-w-[140px] truncate rounded-full bg-brown-yellow-5 px-3 py-1 text-xs font-medium text-brown-100">
+                          {receipt.tier.name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <StateBadge state={receipt.state} />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-gray-100">
+                        {formatDateTime(
+                          receipt.submitted_date ?? receipt.create_date,
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <OpenReceiptButton
+                          state={receipt.state}
+                          onClick={() => setSelectedReceiptId(receipt.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {!loading && !error && total > 0 ? (
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-4">
+          <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-gray-100">
               หน้า {currentPage} จาก {totalPages}
             </p>
@@ -272,6 +265,115 @@ export default function ReceiptsPage() {
           onSuccess={handleSuccess}
         />
       ) : null}
+    </div>
+  );
+}
+
+function MemberCell({ user }: { user: PortalReceipt["user"] }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      {user.picture_url ? (
+        <img
+          src={String(user.picture_url)}
+          alt={user.display_name}
+          className="size-9 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brown-100 text-xs font-medium text-white">
+          {user.display_name.charAt(0)}
+        </div>
+      )}
+      <div className="min-w-0">
+        <Link
+          href={`/dashboard/members/${user.id}`}
+          className="block truncate font-medium text-defualt-text hover:text-brown-100"
+        >
+          {user.display_name}
+        </Link>
+        <p className="truncate text-xs text-gray-100">
+          {displayValue(user.line_user_id)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function OpenReceiptButton({
+  state,
+  onClick,
+  fullWidth = false,
+}: {
+  state: PortalReceipt["state"];
+  onClick: () => void;
+  fullWidth?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 ${
+        fullWidth ? "w-full" : ""
+      }`}
+    >
+      <Eye className="size-4 shrink-0" />
+      <span className="truncate">
+        {state === "pending" ? "ตรวจสอบ" : "ดูรายละเอียด"}
+      </span>
+    </button>
+  );
+}
+
+function ReceiptCard({
+  receipt,
+  onOpen,
+}: {
+  receipt: PortalReceipt;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="space-y-4 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-defualt-text">
+            {receipt.receipt_number}
+          </p>
+          <p className="mt-1 text-xs text-gray-100">
+            {formatDateTime(receipt.submitted_date ?? receipt.create_date)}
+          </p>
+        </div>
+        <StateBadge state={receipt.state} className="shrink-0" />
+      </div>
+
+      <MemberCell user={receipt.user} />
+
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-xs text-gray-100">มูลค่า</dt>
+          <dd className="font-medium text-defualt-text">
+            {formatNumber(receipt.amount)} บาท
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-gray-100">Reward Point</dt>
+          <dd className="font-medium text-brown-100">
+            {formatNumber(receipt.reward_points)}
+          </dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="text-xs text-gray-100">ระดับ</dt>
+          <dd className="mt-1">
+            <span className="inline-block rounded-full bg-brown-yellow-5 px-3 py-1 text-xs font-medium text-brown-100">
+              {receipt.tier.name}
+            </span>
+          </dd>
+        </div>
+      </dl>
+
+      <OpenReceiptButton
+        state={receipt.state}
+        onClick={onOpen}
+        fullWidth
+      />
     </div>
   );
 }
