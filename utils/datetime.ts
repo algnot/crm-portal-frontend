@@ -84,6 +84,52 @@ export function toApiDateTime(value: string) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
 }
 
+export function getThaiDateInputValue(date = new Date()) {
+  const { year, month, day } = formatDateInTimezone(date, THAI_TIMEZONE);
+  return `${year}-${month}-${day}`;
+}
+
+export function toApiDateStartFromDateInput(date: string) {
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return "";
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utcMs = Date.UTC(year, month - 1, day, 0, 0, 0) - BANGKOK_OFFSET_MS;
+  const parsed = new Date(utcMs);
+
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return `${parsed.getUTCFullYear()}-${pad(parsed.getUTCMonth() + 1)}-${pad(parsed.getUTCDate())} ${pad(parsed.getUTCHours())}:${pad(parsed.getUTCMinutes())}:${pad(parsed.getUTCSeconds())}`;
+}
+
+export function toApiDateEndFromDateInput(date: string) {
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return "";
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utcMs = Date.UTC(year, month - 1, day, 23, 59, 59) - BANGKOK_OFFSET_MS;
+  const parsed = new Date(utcMs);
+
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return `${parsed.getUTCFullYear()}-${pad(parsed.getUTCMonth() + 1)}-${pad(parsed.getUTCDate())} ${pad(parsed.getUTCHours())}:${pad(parsed.getUTCMinutes())}:${pad(parsed.getUTCSeconds())}`;
+}
+
+export function formatChartPeriodLabel(period: string) {
+  const dateOnly = period.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) return `${dateOnly[3]}/${dateOnly[2]}`;
+
+  const parsed = parseApiDate(period);
+  if (!parsed) return period;
+
+  const { day, month } = formatDateInTimezone(parsed, THAI_TIMEZONE);
+  return `${day}/${month}`;
+}
+
 export function isApiDateAfterNow(value: string | false | null | undefined) {
   const date = parseApiDate(value);
   if (!date) return true;
