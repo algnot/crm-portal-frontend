@@ -1,5 +1,6 @@
 "use client";
 
+import { FormFieldsSkeleton } from "@/components/util/Skeleton";
 import { acceptInvite, getPublicInvite } from "@/services/auth/auth";
 import type { PublicInvite } from "@/services/team/types";
 import { formatDateTime } from "@/utils/datetime";
@@ -99,9 +100,7 @@ export default function InviteAcceptPage() {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           {loading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-            </div>
+            <FormFieldsSkeleton fields={3} />
           ) : invite ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="rounded-xl bg-gray-10 px-4 py-3 text-sm">

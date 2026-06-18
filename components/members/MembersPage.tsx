@@ -1,6 +1,7 @@
 "use client";
 
 import ActionMenu from "@/components/util/ActionMenu";
+import { TableSkeleton } from "@/components/util/Skeleton";
 import { getUsers } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
 import { formatDateTime } from "@/utils/datetime";
@@ -99,9 +100,7 @@ export default function MembersPage() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <TableSkeleton rows={6} columns={6} avatarColumn />
         ) : error ? (
           <div className="p-6 text-sm text-red-100">{error}</div>
         ) : users.length === 0 ? (

@@ -3,6 +3,7 @@
 import TierFormModal from "@/components/tiers/TierFormModal";
 import JoinRewardsModal from "@/components/tiers/JoinRewardsModal";
 import ActionMenu from "@/components/util/ActionMenu";
+import { TableSkeleton } from "@/components/util/Skeleton";
 import { getTier, getTiers } from "@/services/tiers/tiers";
 import type { PortalTier } from "@/services/tiers/types";
 import { handleError } from "@/utils/errors";
@@ -106,9 +107,7 @@ export default function TiersPage() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <TableSkeleton rows={5} columns={7} />
         ) : error ? (
           <div className="p-6 text-sm text-red-100">{error}</div>
         ) : tiers.length === 0 ? (

@@ -4,6 +4,7 @@ import { clearToken, getToken, syncToken } from "@/services/api-client";
 import { handleError } from "@/utils/errors";
 import { getMe, type PortalMeResponse } from "@/services/auth/auth";
 import DialogHost from "@/components/util/DialogHost";
+import { DashboardShellSkeleton } from "@/components/util/Skeleton";
 import {
   createContext,
   useCallback,
@@ -25,11 +26,8 @@ type AppContextValue = {
 
 const FullLoading = () => {
   return (
-    <div className="fixed inset-0 z-70 flex items-center justify-center bg-[#00000050]">
-      <div
-        className="size-10 animate-spin rounded-full border-4 border-white/30 border-t-brown-100"
-        data-testid="loading-spinner"
-      />
+    <div className="fixed inset-0 z-70 bg-gray-10">
+      <DashboardShellSkeleton />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import type { PortalPointRecord } from "@/services/members/types";
 import { getCurrencies } from "@/services/currencies/currencies";
 import type { PortalCurrency } from "@/services/currencies/types";
 import Select from "@/components/util/Select";
+import { TableSkeleton } from "@/components/util/Skeleton";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import {
@@ -142,9 +143,7 @@ export default function UserPointHistory({
 
       <div className="mt-4">
         {loading ? (
-          <div className="flex min-h-[160px] items-center justify-center">
-            <div className="size-8 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <TableSkeleton rows={4} columns={6} cellClassName="px-3 py-3" />
         ) : error ? (
           <p className="text-sm text-red-100">{error}</p>
         ) : visiblePoints.length === 0 ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { ContentSkeleton } from "@/components/util/Skeleton";
 import { getPartner } from "@/services/partner/partner";
 import type { PartnerAd, PartnerDetail, PartnerUi } from "@/services/partner/types";
 import { useApp } from "@/providers/app-provider";
@@ -85,9 +86,7 @@ export default function PartnerPage() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <ContentSkeleton />
         ) : error ? (
           <div className="p-6 text-sm text-red-100">{error}</div>
         ) : partner ? (

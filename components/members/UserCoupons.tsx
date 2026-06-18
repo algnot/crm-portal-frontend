@@ -3,6 +3,7 @@
 import { getUserCoupons } from "@/services/members/members";
 import type { PortalUserCoupon } from "@/services/members/types";
 import Select from "@/components/util/Select";
+import { CardListSkeleton } from "@/components/util/Skeleton";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import {
@@ -98,9 +99,7 @@ export default function UserCoupons({
 
       <div className="mt-4">
         {loading ? (
-          <div className="flex min-h-[160px] items-center justify-center">
-            <div className="size-8 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <CardListSkeleton count={4} />
         ) : error ? (
           <p className="text-sm text-red-100">{error}</p>
         ) : coupons.length === 0 ? (

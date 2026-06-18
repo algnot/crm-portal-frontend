@@ -6,6 +6,7 @@ import type {
   CouponRedemptionSummary,
 } from "@/services/coupons/types";
 import Select from "@/components/util/Select";
+import { TableSkeleton } from "@/components/util/Skeleton";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import {
@@ -173,9 +174,7 @@ export default function CouponRedemptionsModal({
 
         <div className="mt-5">
           {loading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="size-8 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-            </div>
+            <TableSkeleton rows={5} columns={6} cellClassName="px-4 py-3" />
           ) : error ? (
             <p className="text-sm text-red-100">{error}</p>
           ) : redemptions.length === 0 ? (

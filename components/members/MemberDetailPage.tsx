@@ -3,6 +3,7 @@
 import AdjustPointModal from "@/components/members/AdjustPointModal";
 import UserCoupons from "@/components/members/UserCoupons";
 import UserPointHistory from "@/components/members/UserPointHistory";
+import { MemberDetailSkeleton } from "@/components/util/Skeleton";
 import { getUser } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
 import { handleError } from "@/utils/errors";
@@ -61,11 +62,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center p-8">
-        <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-      </div>
-    );
+    return <MemberDetailSkeleton />;
   }
 
   if (error || !user) {

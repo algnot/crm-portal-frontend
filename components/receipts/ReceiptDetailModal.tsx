@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalDetailSkeleton } from "@/components/util/Skeleton";
 import {
   approveReceipt,
   getReceipt,
@@ -198,9 +199,7 @@ export default function ReceiptDetailModal({
         </div>
 
         {loading ? (
-          <div className="flex min-h-[320px] items-center justify-center">
-            <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <ModalDetailSkeleton />
         ) : error && !receipt ? (
           <div className="mt-5 rounded-xl bg-red-100/10 p-4 text-sm text-red-100">
             {error}

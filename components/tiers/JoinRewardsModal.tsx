@@ -15,6 +15,7 @@ import TierRewardsEditor, {
   rewardsToFormItems,
   type RewardFormItem,
 } from "@/components/tiers/TierRewardsEditor";
+import { FormFieldsSkeleton } from "@/components/util/Skeleton";
 import { handleError } from "@/utils/errors";
 import { useEffect, useMemo, useState } from "react";
 
@@ -161,9 +162,7 @@ export default function JoinRewardsModal({
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {loading ? (
-            <div className="flex min-h-[160px] items-center justify-center">
-              <div className="size-8 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-            </div>
+            <FormFieldsSkeleton fields={3} />
           ) : (
             <TierRewardsEditor
               rewards={rewardItems}

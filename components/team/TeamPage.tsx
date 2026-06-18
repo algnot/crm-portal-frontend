@@ -4,6 +4,7 @@ import CreateInviteModal from "@/components/team/CreateInviteModal";
 import CreateTeamUserModal from "@/components/team/CreateTeamUserModal";
 import EditTeamUserModal from "@/components/team/EditTeamUserModal";
 import ActionMenu from "@/components/util/ActionMenu";
+import { TableSkeleton } from "@/components/util/Skeleton";
 import Select from "@/components/util/Select";
 import {
   cancelTeamInvite,
@@ -283,9 +284,7 @@ export default function TeamPage() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <div className="size-10 animate-spin rounded-full border-4 border-gray-200 border-t-brown-100" />
-          </div>
+          <TableSkeleton rows={6} columns={6} />
         ) : error ? (
           <div className="p-6 text-sm text-red-100">{error}</div>
         ) : tab === "users" ? (
