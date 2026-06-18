@@ -62,7 +62,7 @@ export default function PartnerPage() {
           ข้อมูล Partner
         </h1>
         <p className="mt-1 text-sm text-gray-100">
-          ดูข้อมูลการตั้งค่า Partner แบบอ่านอย่างเดียว
+          ดูข้อมูลการตั้งค่าระบบ โปรดติดต่อทีมงานหากต้องการแก้ไขข้อมูล
         </p>
       </div>
 
