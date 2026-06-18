@@ -160,7 +160,7 @@ export default function MembersPage() {
                     </td>
                     <td className="px-4 py-4">
                       <ActionMenu
-                        ariaLabel={`ตัวเลือกสมาชิก ${user.name}`}
+                        ariaLabel={`ตัวเลือกสมาชิก ${user.display_name}`}
                         items={[
                           {
                             label: "ดูรายละเอียด",
