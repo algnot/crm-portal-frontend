@@ -3,6 +3,7 @@
 import CouponAddCodesModal from "@/components/coupons/CouponAddCodesModal";
 import CouponFormModal from "@/components/coupons/CouponFormModal";
 import CouponRedemptionsModal from "@/components/coupons/CouponRedemptionsModal";
+import ActionMenu from "@/components/util/ActionMenu";
 import {
   exportCouponCodes,
   getCoupon,
@@ -211,46 +212,39 @@ export default function CouponsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setAddCodesCoupon(coupon)}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-gray-200 px-4 py-2 text-sm font-medium text-defualt-text transition hover:bg-gray-10"
-                        >
-                          <TicketPlus className="size-4" />
-                          เพิ่มโค้ด
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleExportCodes(coupon)}
-                          disabled={exportingCouponId === coupon.id}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-gray-200 px-4 py-2 text-sm font-medium text-defualt-text transition hover:bg-gray-10 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <Download className="size-4" />
-                          {exportingCouponId === coupon.id
-                            ? "กำลังส่งออก..."
-                            : "ส่งออกโค้ด"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRedemptionsCoupon(coupon)}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-gray-200 px-4 py-2 text-sm font-medium text-defualt-text transition hover:bg-gray-10"
-                        >
-                          <History className="size-4" />
-                          ประวัติ
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void openEditModal(coupon.id)}
-                          disabled={editingCouponId === coupon.id}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-4xl border border-brown-100 px-4 py-2 text-sm font-medium text-brown-100 transition hover:bg-brown-yellow-5 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <Pencil className="size-4" />
-                          {editingCouponId === coupon.id
-                            ? "กำลังโหลด..."
-                            : "แก้ไข"}
-                        </button>
-                      </div>
+                      <ActionMenu
+                        ariaLabel={`ตัวเลือกคูปอง ${coupon.name}`}
+                        items={[
+                          {
+                            label: "เพิ่มโค้ด",
+                            icon: <TicketPlus className="size-4" />,
+                            onClick: () => setAddCodesCoupon(coupon),
+                          },
+                          {
+                            label:
+                              exportingCouponId === coupon.id
+                                ? "กำลังส่งออก..."
+                                : "ส่งออกโค้ด",
+                            icon: <Download className="size-4" />,
+                            disabled: exportingCouponId === coupon.id,
+                            onClick: () => void handleExportCodes(coupon),
+                          },
+                          {
+                            label: "ประวัติ",
+                            icon: <History className="size-4" />,
+                            onClick: () => setRedemptionsCoupon(coupon),
+                          },
+                          {
+                            label:
+                              editingCouponId === coupon.id
+                                ? "กำลังโหลด..."
+                                : "แก้ไข",
+                            icon: <Pencil className="size-4" />,
+                            disabled: editingCouponId === coupon.id,
+                            onClick: () => void openEditModal(coupon.id),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
