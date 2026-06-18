@@ -18,7 +18,7 @@ import {
 } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -126,6 +126,36 @@ function ChartTooltip({
   );
 }
 
+function ChartContainer({ children }: { children: React.ReactElement }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasSize, setHasSize] = useState(false);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const { width, height } = element.getBoundingClientRect();
+      setHasSize(width > 0 && height > 0);
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="h-full w-full min-h-0 min-w-0">
+      {hasSize ? (
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  );
+}
+
 function ChartCard({
   title,
   description,
@@ -139,13 +169,13 @@ function ChartCard({
 }) {
   return (
     <section
-      className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5 ${className}`}
+      className={`min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5 ${className}`}
     >
       <h2 className="text-base font-semibold text-defualt-text">{title}</h2>
       {description ? (
         <p className="mt-1 text-sm text-gray-100">{description}</p>
       ) : null}
-      <div className="mt-4 h-72">{children}</div>
+      <div className="mt-4 h-72 w-full min-h-72 min-w-0">{children}</div>
     </section>
   );
 }
@@ -423,13 +453,13 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
             <ChartCard
               title="สมาชิกแยกตามระดับ"
               description="สัดส่วนสมาชิกในแต่ละ tier"
             >
               {membersByTier.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <PieChart>
                     <Pie
                       data={membersByTier}
@@ -449,7 +479,7 @@ export default function DashboardPage() {
                     <Tooltip content={<ChartTooltip />} />
                     <Legend />
                   </PieChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ยังไม่มีข้อมูลสมาชิก" />
               )}
@@ -464,7 +494,7 @@ export default function DashboardPage() {
               }
             >
               {hourlyData.some((item) => item.count > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <AreaChart data={hourlyData} margin={chartMargin}>
                     <defs>
                       <linearGradient
@@ -503,7 +533,7 @@ export default function DashboardPage() {
                       strokeWidth={2}
                     />
                   </AreaChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ไม่มีการสมัครในช่วงเวลานี้" />
               )}
@@ -515,7 +545,7 @@ export default function DashboardPage() {
               className="lg:col-span-2"
             >
               {registrationData.some((item) => item.count > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <LineChart data={registrationData} margin={chartMargin}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                     <XAxis dataKey="period" tick={{ fontSize: 11 }} />
@@ -531,7 +561,7 @@ export default function DashboardPage() {
                       activeDot={{ r: 5 }}
                     />
                   </LineChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ไม่มีสมาชิกสมัครใหม่ในช่วงเวลานี้" />
               )}
@@ -543,7 +573,7 @@ export default function DashboardPage() {
               className={receiptHasCount ? undefined : "lg:col-span-2"}
             >
               {receiptData.some((item) => item.amount > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <AreaChart data={receiptData} margin={chartMargin}>
                     <defs>
                       <linearGradient
@@ -581,7 +611,7 @@ export default function DashboardPage() {
                       strokeWidth={2}
                     />
                   </AreaChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ไม่มียอดใบเสร็จในช่วงเวลานี้" />
               )}
@@ -593,7 +623,7 @@ export default function DashboardPage() {
                 description="จำนวนใบเสร็จที่อนุมัติแล้วตามช่วงเวลาที่เลือก"
               >
                 {receiptData.some((item) => item.count > 0) ? (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ChartContainer>
                     <LineChart data={receiptData} margin={chartMargin}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                       <XAxis dataKey="period" tick={{ fontSize: 11 }} />
@@ -609,7 +639,7 @@ export default function DashboardPage() {
                         activeDot={{ r: 5 }}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ChartContainer>
                 ) : (
                   <EmptyChart message="ไม่มีใบเสร็จในช่วงเวลานี้" />
                 )}
@@ -621,7 +651,7 @@ export default function DashboardPage() {
               description="สัดส่วนแลกแล้ว / ใช้แล้ว / หมดอายุ"
             >
               {couponData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <BarChart
                     data={couponData}
                     layout="vertical"
@@ -666,7 +696,7 @@ export default function DashboardPage() {
                       radius={[0, 4, 4, 0]}
                     />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ไม่มีคูปองที่แลกในช่วงเวลานี้" />
               )}
@@ -677,7 +707,7 @@ export default function DashboardPage() {
               description="เปรียบเทียบแต้มที่ได้รับกับที่ใช้ไปในช่วงเดียวกัน"
             >
               {pointsData.some((item) => item.earned > 0 || item.used > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer>
                   <BarChart data={pointsData} margin={chartMargin}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                     <XAxis dataKey="period" tick={{ fontSize: 11 }} />
@@ -700,7 +730,7 @@ export default function DashboardPage() {
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <EmptyChart message="ไม่มีข้อมูล Point ในช่วงเวลานี้" />
               )}

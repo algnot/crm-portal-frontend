@@ -30,7 +30,6 @@ export function canAccessPath(
 ): boolean {
   const resolvedRole = role ?? "admin";
   if (resolvedRole === "admin") return true;
-  if (pathname === "/dashboard") return true;
   return OPERATION_ALLOWED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
