@@ -6,6 +6,7 @@ import UserPointHistory from "@/components/members/UserPointHistory";
 import { getUser } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
 import { handleError } from "@/utils/errors";
+import { formatDateTime } from "@/utils/datetime";
 import { displayValue, formatNumber } from "@/utils/format";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -122,7 +123,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
                 {user.tier.name} ({user.tier.code})
               </p>
               <p className="mt-1 text-sm text-gray-100">
-                สมัครเมื่อ {user.create_date}
+                สมัครเมื่อ {formatDateTime(user.create_date)}
               </p>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import ActionMenu from "@/components/util/ActionMenu";
 import { getUsers } from "@/services/members/members";
 import type { PortalUser } from "@/services/members/types";
+import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import {
   displayValue,
@@ -156,7 +157,7 @@ export default function MembersPage() {
                       {formatNumber(getDefaultPointBalance(user.points))}
                     </td>
                     <td className="px-4 py-4 text-gray-100">
-                      {user.create_date}
+                      {formatDateTime(user.create_date)}
                     </td>
                     <td className="px-4 py-4">
                       <ActionMenu

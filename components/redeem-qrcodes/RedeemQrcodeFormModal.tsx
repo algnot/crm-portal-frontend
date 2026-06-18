@@ -129,14 +129,6 @@ export default function RedeemQrcodeFormModal({
       });
   }, [qrcode]);
 
-  const typeOptions = useMemo(
-    () => [
-      { value: "earn" as const, label: "รับ Point" },
-      { value: "spend" as const, label: "ใช้ Point" },
-    ],
-    [],
-  );
-
   const currencyOptions = useMemo(
     () =>
       (currencies ?? []).map((currency) => ({
@@ -206,7 +198,7 @@ export default function RedeemQrcodeFormModal({
 
     const payload: CreateRedeemQrcodeRequest = {
       name: form.name.trim(),
-      type: form.type,
+      type: "earn",
       value,
       limit_per_user: limitPerUser,
       limit_per_qr: limitPerQr,
@@ -343,12 +335,11 @@ export default function RedeemQrcodeFormModal({
                 </Field>
 
                 <Field label="ประเภท">
-                  <Select
-                    value={form.type}
-                    options={typeOptions}
-                    onChange={(value) =>
-                      setForm((prev) => ({ ...prev, type: value }))
-                    }
+                  <input
+                    type="text"
+                    value="รับ Point"
+                    readOnly
+                    className={`${inputClassName} cursor-not-allowed bg-gray-10 text-gray-100`}
                   />
                 </Field>
 

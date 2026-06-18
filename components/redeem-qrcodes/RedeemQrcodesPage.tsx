@@ -8,7 +8,7 @@ import {
   getRedeemQrcodes,
 } from "@/services/redeem-qrcodes/redeem-qrcodes";
 import type { PortalRedeemQrcode } from "@/services/redeem-qrcodes/types";
-import { formatDateTime } from "@/utils/datetime";
+import { formatDateTime, isApiDateAfterNow } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { formatNumber } from "@/utils/format";
 import { ChevronLeft, ChevronRight, Pencil, Plus } from "lucide-react";
@@ -125,7 +125,7 @@ export default function RedeemQrcodesPage() {
   const isActive = (qrcode: PortalRedeemQrcode) => {
     if (qrcode.active === false) return false;
     if (!qrcode.expiration_date) return true;
-    return new Date(qrcode.expiration_date.replace(" ", "T")) > new Date();
+    return isApiDateAfterNow(qrcode.expiration_date);
   };
 
   return (
