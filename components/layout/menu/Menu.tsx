@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   BadgeCheck,
+  Building2,
   LayoutDashboard,
   Menu as MenuIcon,
   QrCode,
@@ -59,6 +60,11 @@ export default function Menu() {
       icon: <LayoutDashboard className={iconClassName} />,
       label: "แดชบอร์ด",
       path: "/dashboard",
+    },
+    {
+      icon: <Building2 className={iconClassName} />,
+      label: "ข้อมูล Partner",
+      path: "/dashboard/partner",
     },
     {
       icon: <Users className={iconClassName} />,
