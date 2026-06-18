@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import InviteAcceptPage from "@/components/auth/InviteAcceptPage";
 
+export const dynamic = "force-dynamic";
+
 export default function Page() {
   return (
     <Suspense
