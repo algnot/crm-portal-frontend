@@ -60,9 +60,11 @@ export default function LoginForm() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-defualt-text">
-            BOPP CRM Portal
-          </h1>
+          <img
+            src="/logo.png"
+            alt="logo"
+            className="mx-auto h-10 mb-6 object-contain"
+          />
           <p className="mt-2 text-sm text-gray-100">เข้าสู่ระบบเพื่อใช้งาน</p>
         </div>
 
