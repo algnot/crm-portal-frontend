@@ -49,7 +49,7 @@ export type CreateRedeemQrcodeRequest = {
   limit_per_user: number;
   limit_per_qr: number;
   expiration_date: string;
-  reward_coupon_id?: number;
+  reward_coupon_id?: number | false;
 };
 
 export type UpdateRedeemQrcodeRequest = Partial<CreateRedeemQrcodeRequest>;

@@ -208,9 +208,9 @@ export default function RedeemQrcodeFormModal({
     if (form.currencyId) {
       payload.currency_id = form.currencyId;
     }
-    if (form.rewardCouponId) {
-      payload.reward_coupon_id = form.rewardCouponId;
-    }
+    payload.reward_coupon_id = form.rewardCouponId
+      ? form.rewardCouponId
+      : false;
 
     return payload;
   };
