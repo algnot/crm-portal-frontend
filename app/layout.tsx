@@ -5,7 +5,7 @@ import { Noto_Sans_Thai } from "next/font/google";
 import AppProvider from "@/providers/app-provider";
 
 export const metadata: Metadata = {
-  title: "BOPP CRM Portal",
+  title: "BOPP Portal",
 };
 
 const notoSansThai = Noto_Sans_Thai({
