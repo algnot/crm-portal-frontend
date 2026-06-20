@@ -194,14 +194,6 @@ export default function TeamPage() {
             <Link2 className="size-4" />
             เชิญด้วยลิงก์
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCreateUser(true)}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-4xl bg-brown-100 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brown-100/80"
-          >
-            <UserPlus className="size-4" />
-            เพิ่มสมาชิก
-          </button>
         </div>
       </div>
 
