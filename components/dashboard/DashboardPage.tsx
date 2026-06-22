@@ -518,14 +518,14 @@ export default function DashboardPage() {
             >
               {membersByTier.length > 0 ? (
                 <ChartContainer>
-                  <PieChart>
+                  <PieChart margin={{ top: 20, right: 24, bottom: 4, left: 24 }}>
                     <Pie
                       data={membersByTier}
                       dataKey="count"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
-                      outerRadius={110}
+                      cy="52%"
+                      outerRadius="58%"
                       label={({ name, percent }) =>
                         `${name} (${Math.round((percent ?? 0) * 100)}%)`
                       }
@@ -535,7 +535,7 @@ export default function DashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip content={<ChartTooltip />} />
-                    <Legend />
+                    <Legend verticalAlign="bottom" />
                   </PieChart>
                 </ChartContainer>
               ) : (

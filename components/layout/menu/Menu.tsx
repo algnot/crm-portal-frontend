@@ -142,7 +142,7 @@ export default function Menu() {
             <img
               src="/logo.png"
               alt="logo"
-              className={`size-13 shrink-0 object-contain ${isCollapsed ? "md:hidden" : ""}`}
+              className={`size-20 shrink-0 object-contain ${isCollapsed ? "md:hidden" : ""}`}
               onClick={() => window.location.assign("/")}
             />
           )}
