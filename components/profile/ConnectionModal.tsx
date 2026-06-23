@@ -227,43 +227,6 @@ export default function ConnectionModal({ me, onClose }: ConnectionModalProps) {
               </p>
 
               <UsageProgressTube usage={data.usage} />
-
-              {data.history.length > 0 ? (
-                <div className="mt-5">
-                  <h4 className="text-xs font-semibold text-defualt-text">
-                    ประวัติการใช้งานรายเดือน
-                  </h4>
-                  <div className="mt-3 space-y-3">
-                    {data.history.map((item) => (
-                      <div
-                        key={item.month}
-                        className={`rounded-xl border bg-white p-3 ${
-                          item.month === data.usage.month
-                            ? "border-brown-100/40"
-                            : "border-gray-200"
-                        }`}
-                      >
-                        <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-defualt-text">
-                            {formatMonth(item.month)}
-                            {item.month === data.usage.month ? (
-                              <span className="ml-2 text-brown-100">
-                                (เดือนนี้)
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className="text-gray-100">
-                            {item.unlimited
-                              ? `${formatNumber(item.used)} tokens`
-                              : `${formatNumber(item.used)} / ${formatNumber(item.limit ?? 0)}`}
-                          </span>
-                        </div>
-                        <UsageProgressTube usage={item} compact />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </section>
 
             <section className="rounded-2xl border border-gray-200 p-4">
