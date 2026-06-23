@@ -33,6 +33,42 @@ export type PortalLoginResponse = {
   partner: { name: string; slug: string; logo_url: string | null };
 };
 
+export type ApiKeyStatus = {
+  has_api_key: boolean;
+  enabled: boolean;
+};
+
+export type ApiKeyStatusResponse = {
+  api_key: ApiKeyStatus;
+};
+
+export type ApiKeyWithSecret = ApiKeyStatus & {
+  key?: string;
+};
+
+export type ApiKeyMutationResponse = {
+  api_key: ApiKeyWithSecret;
+  message?: string;
+};
+
+export type ApiKeyUsage = {
+  month: string;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  unlimited: boolean;
+};
+
+export type ApiKeyUsageResponse = {
+  usage: ApiKeyUsage;
+  history: ApiKeyUsage[];
+  partner: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+};
+
 export type {
   AcceptInviteRequest,
   PublicInvite,
