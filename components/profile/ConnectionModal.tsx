@@ -228,30 +228,6 @@ export default function ConnectionModal({ me, onClose }: ConnectionModalProps) {
 
               <UsageProgressTube usage={data.usage} />
 
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <UsageStat
-                  label="ใช้แล้ว"
-                  value={formatNumber(data.usage.used)}
-                />
-                <UsageStat
-                  label="คงเหลือ"
-                  value={
-                    data.usage.unlimited
-                      ? "ไม่จำกัด"
-                      : formatNumber(data.usage.remaining ?? 0)
-                  }
-                />
-                <UsageStat
-                  label="โควต้า/เดือน"
-                  value={
-                    data.usage.unlimited
-                      ? "ไม่จำกัด"
-                      : formatNumber(data.usage.limit ?? 0)
-                  }
-                  className="col-span-2 sm:col-span-1"
-                />
-              </div>
-
               {data.history.length > 0 ? (
                 <div className="mt-5">
                   <h4 className="text-xs font-semibold text-defualt-text">
@@ -278,7 +254,7 @@ export default function ConnectionModal({ me, onClose }: ConnectionModalProps) {
                           </span>
                           <span className="text-gray-100">
                             {item.unlimited
-                              ? `${formatNumber(item.used)} requests`
+                              ? `${formatNumber(item.used)} tokens`
                               : `${formatNumber(item.used)} / ${formatNumber(item.limit ?? 0)}`}
                           </span>
                         </div>
@@ -294,7 +270,7 @@ export default function ConnectionModal({ me, onClose }: ConnectionModalProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-defualt-text">
-                    BOPP MCP 
+                    BOPP MCP
                   </h3>
                   <p className="mt-1 text-xs text-gray-100">
                     เชื่อมต่อ BOPP Portal กับ MCP ของ {me.partner.name}
@@ -414,9 +390,7 @@ function UsageProgressTube({
       <div className={`${compact ? "mt-0" : "mt-4"} rounded-2xl bg-white p-4`}>
         {!compact ? (
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-defualt-text">
-              โควต้า Token
-            </p>
+            <p className="text-sm font-semibold text-defualt-text">โควต้า</p>
             <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
               ไม่จำกัด
             </span>
@@ -434,7 +408,7 @@ function UsageProgressTube({
         </div>
         {!compact ? (
           <p className="mt-2 text-xs text-gray-100">
-            ใช้ไปแล้ว {formatNumber(usage.used)} requests ในเดือนนี้
+            ใช้ไปแล้ว {formatNumber(usage.used)} tokens ในเดือนนี้
           </p>
         ) : null}
       </div>
@@ -446,9 +420,7 @@ function UsageProgressTube({
       {!compact ? (
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-defualt-text">
-              โควต้า API
-            </p>
+            <p className="text-sm font-semibold text-defualt-text">โควต้า</p>
             <p className={`mt-1 text-xs font-medium ${tone.textClass}`}>
               {statusText}
             </p>
@@ -488,8 +460,7 @@ function UsageProgressTube({
       {!compact ? (
         <div className="mt-3 flex items-center justify-between text-xs text-gray-100">
           <span>
-            {formatNumber(usage.used)} / {formatNumber(usage.limit ?? 0)}{" "}
-            requests
+            {formatNumber(usage.used)} / {formatNumber(usage.limit ?? 0)} tokens
           </span>
           <span>เหลือ {formatNumber(usage.remaining ?? 0)}</span>
         </div>
