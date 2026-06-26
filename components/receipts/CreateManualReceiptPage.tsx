@@ -202,11 +202,14 @@ export default function CreateManualReceiptPage() {
     setError(null);
   };
 
-  const handleLookup = async (query: string) => {
+  const handleLookup = async (
+    query: string,
+  ): Promise<{ ok: true } | { ok: false; message: string }> => {
     const trimmed = normalizeMemberLookupQuery(query);
     if (!trimmed) {
-      setError("กรุณาระบุเบอร์โทร อีเมล หรือ LINE User ID");
-      return;
+      const message = "กรุณาระบุเบอร์โทร อีเมล หรือ LINE User ID";
+      setError(message);
+      return { ok: false, message };
     }
 
     setLookupLoading(true);
@@ -217,9 +220,12 @@ export default function CreateManualReceiptPage() {
       setMember(user);
       setQueryInput(trimmed);
       setStep(requireImage ? "photo" : "amount");
+      return { ok: true };
     } catch (lookupError) {
+      const message = handleError(lookupError).message;
       setMember(null);
-      setError(handleError(lookupError).message);
+      setError(message);
+      return { ok: false, message };
     } finally {
       setLookupLoading(false);
     }
@@ -582,9 +588,11 @@ export default function CreateManualReceiptPage() {
       {showScanner ? (
         <QrScannerModal
           onClose={() => setShowScanner(false)}
-          onScan={(value) => {
-            setQueryInput(value);
-            void handleLookup(value);
+          onScan={async (value) => {
+            const result = await handleLookup(value);
+            if (!result.ok) {
+              throw new Error(result.message);
+            }
           }}
         />
       ) : null}

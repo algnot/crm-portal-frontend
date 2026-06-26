@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import jsQR from "jsqr";
 import { useEffect, useRef, useState } from "react";
 
@@ -10,8 +10,10 @@ const MAX_SCAN_DIMENSION = 960;
 
 type QrScannerModalProps = {
   onClose: () => void;
-  onScan: (value: string) => void;
+  onScan: (value: string) => Promise<void>;
 };
+
+type ScanStatus = "scanning" | "processing" | "lookup_error";
 
 function canUseCamera() {
   return (
@@ -139,16 +141,33 @@ export default function QrScannerModal({
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastScanAtRef = useRef(0);
+  const onScanRef = useRef(onScan);
+  const isHandlingScanRef = useRef(false);
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
+  const [status, setStatus] = useState<ScanStatus>("scanning");
+  const [scanSession, setScanSession] = useState(0);
+
+  onScanRef.current = onScan;
 
   const closeModal = () => {
     setIsClosing(true);
     setTimeout(() => onClose(), MODAL_EXIT_MS);
   };
 
+  const retryScan = () => {
+    setError(null);
+    setStatus("scanning");
+    isHandlingScanRef.current = false;
+    setScanSession((session) => session + 1);
+  };
+
   useEffect(() => {
+    if (status !== "scanning") {
+      return;
+    }
+
     let cancelled = false;
 
     const stopCamera = () => {
@@ -227,10 +246,27 @@ export default function QrScannerModal({
                 context,
                 scannerEngine,
               );
-              if (value) {
+              if (value && !isHandlingScanRef.current) {
+                isHandlingScanRef.current = true;
                 stopCamera();
-                onScan(value);
-                closeModal();
+                setStatus("processing");
+
+                try {
+                  await onScanRef.current(value);
+                  if (!cancelled) {
+                    closeModal();
+                  }
+                } catch (lookupError) {
+                  if (!cancelled) {
+                    setStatus("lookup_error");
+                    setError(
+                      lookupError instanceof Error
+                        ? lookupError.message
+                        : "ไม่พบสมาชิก",
+                    );
+                    isHandlingScanRef.current = false;
+                  }
+                }
                 return;
               }
             } catch {
@@ -261,7 +297,7 @@ export default function QrScannerModal({
       cancelled = true;
       stopCamera();
     };
-  }, [onScan]);
+  }, [scanSession, status]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -284,7 +320,8 @@ export default function QrScannerModal({
         <button
           type="button"
           onClick={closeModal}
-          className="rounded-full bg-white/10 p-3"
+          disabled={status === "processing"}
+          className="rounded-full bg-white/10 p-3 disabled:opacity-50"
           aria-label="ปิด"
         >
           <X className="size-5" />
@@ -301,29 +338,61 @@ export default function QrScannerModal({
         />
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-8">
-          <div className="size-64 rounded-3xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+          {status === "scanning" ? (
+            <div className="size-64 rounded-3xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+          ) : null}
         </div>
+
+        {status === "processing" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 px-6 text-center">
+            <Loader2 className="size-12 animate-spin text-white" />
+            <p className="mt-4 text-base font-medium text-white">
+              สแกนสำเร็จ
+            </p>
+            <p className="mt-1 text-sm text-white/75">กำลังค้นหาสมาชิก...</p>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-3 px-4 pb-8 pt-4">
-        {isStarting ? (
+        {isStarting && status === "scanning" ? (
           <p className="text-center text-sm text-white/80">กำลังเปิดกล้อง...</p>
         ) : null}
 
-        {error ? (
+        {status === "processing" ? (
+          <p className="flex items-center justify-center gap-2 text-center text-sm text-white/80">
+            <Loader2 className="size-4 animate-spin" />
+            กำลังดึงข้อมูลสมาชิก
+          </p>
+        ) : null}
+
+        {error && status !== "processing" ? (
           <p className="rounded-2xl bg-red-500/20 px-4 py-3 text-center text-sm text-red-100">
             {error}
           </p>
-        ) : (
+        ) : null}
+
+        {status === "scanning" && !error && !isStarting ? (
           <p className="text-center text-sm text-white/80">
             ระบบจะค้นหาสมาชิกให้อัตโนมัติเมื่อสแกนสำเร็จ
           </p>
-        )}
+        ) : null}
+
+        {status === "lookup_error" ? (
+          <button
+            type="button"
+            onClick={retryScan}
+            className="w-full rounded-2xl bg-brown-100 px-4 py-4 text-base font-medium text-white"
+          >
+            สแกนอีกครั้ง
+          </button>
+        ) : null}
 
         <button
           type="button"
           onClick={closeModal}
-          className="w-full rounded-2xl bg-white/10 px-4 py-4 text-base font-medium text-white"
+          disabled={status === "processing"}
+          className="w-full rounded-2xl bg-white/10 px-4 py-4 text-base font-medium text-white disabled:opacity-50"
         >
           ยกเลิก
         </button>
