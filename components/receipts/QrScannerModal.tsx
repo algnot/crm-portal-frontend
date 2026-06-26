@@ -5,7 +5,51 @@ import jsQR from "jsqr";
 import { useEffect, useRef, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
-const SCAN_INTERVAL_MS = 250;
+const SCAN_INTERVAL_MS = 200;
+const CROP_RATIO = 0.72;
+
+function getCenterCrop(
+  videoWidth: number,
+  videoHeight: number,
+  ratio = CROP_RATIO,
+) {
+  const size = Math.floor(Math.min(videoWidth, videoHeight) * ratio);
+  return {
+    size,
+    x: Math.floor((videoWidth - size) / 2),
+    y: Math.floor((videoHeight - size) / 2),
+  };
+}
+
+function decodeWithJsQr(
+  context: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  video: HTMLVideoElement,
+) {
+  const { width, height } = video;
+  const crop = getCenterCrop(width, height);
+
+  canvas.width = crop.size;
+  canvas.height = crop.size;
+  context.drawImage(
+    video,
+    crop.x,
+    crop.y,
+    crop.size,
+    crop.size,
+    0,
+    0,
+    crop.size,
+    crop.size,
+  );
+
+  const imageData = context.getImageData(0, 0, crop.size, crop.size);
+  const result = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "attemptBoth",
+  });
+
+  return result?.data?.trim() ?? null;
+}
 
 type QrScannerModalProps = {
   onClose: () => void;
@@ -63,13 +107,7 @@ async function detectQrFromVideo(
     return null;
   }
 
-  context.drawImage(video, 0, 0, width, height);
-  const imageData = context.getImageData(0, 0, width, height);
-  const result = jsQR(imageData.data, imageData.width, imageData.height, {
-    inversionAttempts: "dontInvert",
-  });
-
-  return result?.data?.trim() ?? null;
+  return decodeWithJsQr(context, canvas, video);
 }
 
 export default function QrScannerModal({
