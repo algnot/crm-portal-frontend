@@ -5,51 +5,8 @@ import jsQR from "jsqr";
 import { useEffect, useRef, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
-const SCAN_INTERVAL_MS = 200;
-const CROP_RATIO = 0.72;
-
-function getCenterCrop(
-  videoWidth: number,
-  videoHeight: number,
-  ratio = CROP_RATIO,
-) {
-  const size = Math.floor(Math.min(videoWidth, videoHeight) * ratio);
-  return {
-    size,
-    x: Math.floor((videoWidth - size) / 2),
-    y: Math.floor((videoHeight - size) / 2),
-  };
-}
-
-function decodeWithJsQr(
-  context: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  video: HTMLVideoElement,
-) {
-  const { width, height } = video;
-  const crop = getCenterCrop(width, height);
-
-  canvas.width = crop.size;
-  canvas.height = crop.size;
-  context.drawImage(
-    video,
-    crop.x,
-    crop.y,
-    crop.size,
-    crop.size,
-    0,
-    0,
-    crop.size,
-    crop.size,
-  );
-
-  const imageData = context.getImageData(0, 0, crop.size, crop.size);
-  const result = jsQR(imageData.data, imageData.width, imageData.height, {
-    inversionAttempts: "attemptBoth",
-  });
-
-  return result?.data?.trim() ?? null;
-}
+const SCAN_INTERVAL_MS = 150;
+const MAX_SCAN_DIMENSION = 960;
 
 type QrScannerModalProps = {
   onClose: () => void;
@@ -62,6 +19,70 @@ function canUseCamera() {
     window.isSecureContext &&
     Boolean(navigator.mediaDevices?.getUserMedia)
   );
+}
+
+function getCenterCrop(
+  frameWidth: number,
+  frameHeight: number,
+  ratio = 0.7,
+) {
+  const size = Math.floor(Math.min(frameWidth, frameHeight) * ratio);
+  return {
+    size,
+    x: Math.floor((frameWidth - size) / 2),
+    y: Math.floor((frameHeight - size) / 2),
+  };
+}
+
+function decodeImageDataWithJsQr(imageData: ImageData) {
+  const result = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "attemptBoth",
+  });
+
+  return result?.data?.trim() ?? null;
+}
+
+function decodeWithJsQr(
+  context: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  video: HTMLVideoElement,
+) {
+  const sourceWidth = video.videoWidth;
+  const sourceHeight = video.videoHeight;
+  if (!sourceWidth || !sourceHeight) {
+    return null;
+  }
+
+  const scale = Math.min(
+    1,
+    MAX_SCAN_DIMENSION / Math.max(sourceWidth, sourceHeight),
+  );
+  const frameWidth = Math.floor(sourceWidth * scale);
+  const frameHeight = Math.floor(sourceHeight * scale);
+
+  canvas.width = frameWidth;
+  canvas.height = frameHeight;
+  context.drawImage(video, 0, 0, frameWidth, frameHeight);
+
+  const fullFrame = context.getImageData(0, 0, frameWidth, frameHeight);
+  const fullFrameResult = decodeImageDataWithJsQr(fullFrame);
+  if (fullFrameResult) {
+    return fullFrameResult;
+  }
+
+  const crop = getCenterCrop(frameWidth, frameHeight);
+  if (crop.size <= 0) {
+    return null;
+  }
+
+  const croppedFrame = context.getImageData(
+    crop.x,
+    crop.y,
+    crop.size,
+    crop.size,
+  );
+
+  return decodeImageDataWithJsQr(croppedFrame);
 }
 
 type ScannerEngine =
@@ -82,29 +103,27 @@ function createScannerEngine(): ScannerEngine {
 async function detectQrFromVideo(
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
   engine: ScannerEngine,
 ) {
   if (video.readyState < video.HAVE_ENOUGH_DATA) {
     return null;
   }
 
-  const width = video.videoWidth;
-  const height = video.videoHeight;
-  if (!width || !height) {
+  if (!video.videoWidth || !video.videoHeight) {
     return null;
   }
 
   if (engine.type === "barcode-detector") {
-    const barcodes = await engine.detector.detect(video);
-    return barcodes[0]?.rawValue?.trim() ?? null;
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) {
-    return null;
+    try {
+      const barcodes = await engine.detector.detect(video);
+      const nativeResult = barcodes[0]?.rawValue?.trim();
+      if (nativeResult) {
+        return nativeResult;
+      }
+    } catch {
+      // Fall back to jsQR when native detection fails for a frame.
+    }
   }
 
   return decodeWithJsQr(context, canvas, video);
@@ -116,6 +135,7 @@ export default function QrScannerModal({
 }: QrScannerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastScanAtRef = useRef(0);
@@ -154,11 +174,24 @@ export default function QrScannerModal({
 
       if (!canvasRef.current) {
         canvasRef.current = document.createElement("canvas");
+        contextRef.current = canvasRef.current.getContext("2d", {
+          willReadFrequently: true,
+        });
+      }
+
+      if (!contextRef.current) {
+        setError("ไม่สามารถเริ่มสแกน QR ได้ กรุณากรอกข้อมูลด้วยตนเอง");
+        setIsStarting(false);
+        return;
       }
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -173,12 +206,15 @@ export default function QrScannerModal({
         }
 
         video.srcObject = stream;
+        video.setAttribute("playsinline", "true");
         await video.play();
 
         const scannerEngine = createScannerEngine();
+        const canvas = canvasRef.current;
+        const context = contextRef.current;
 
         const scanFrame = async () => {
-          if (cancelled || !videoRef.current || !canvasRef.current) return;
+          if (cancelled || !videoRef.current || !canvas || !context) return;
 
           const now = performance.now();
           if (now - lastScanAtRef.current >= SCAN_INTERVAL_MS) {
@@ -187,7 +223,8 @@ export default function QrScannerModal({
             try {
               const value = await detectQrFromVideo(
                 videoRef.current,
-                canvasRef.current,
+                canvas,
+                context,
                 scannerEngine,
               );
               if (value) {
@@ -254,12 +291,13 @@ export default function QrScannerModal({
         </button>
       </div>
 
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-hidden bg-black">
         <video
           ref={videoRef}
-          className="size-full object-cover"
+          className="size-full object-contain"
           playsInline
           muted
+          autoPlay
         />
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-8">
