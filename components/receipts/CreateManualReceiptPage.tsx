@@ -1,5 +1,7 @@
 "use client";
 
+import CreateManualReceiptPosView from "@/components/receipts/CreateManualReceiptPosView";
+import PosModeSwitch from "@/components/receipts/PosModeSwitch";
 import QrScannerModal from "@/components/receipts/QrScannerModal";
 import { calcRewardPoints } from "@/components/receipts/ReceiptDetailModal";
 import {
@@ -8,6 +10,7 @@ import {
   type ReceiptMember,
 } from "@/services/receipts/receipts";
 import { useApp } from "@/providers/app-provider";
+import { useReceiptPosMode } from "@/hooks/useReceiptPosMode";
 import { handleError } from "@/utils/errors";
 import { formatNumber, getDefaultPointBalance, normalizeMemberLookupQuery } from "@/utils/format";
 import { readFileAsBase64 } from "@/utils/file";
@@ -155,6 +158,7 @@ function MemberSummary({ member }: { member: ReceiptMember }) {
 
 export default function CreateManualReceiptPage() {
   const { me } = useApp();
+  const { posMode, setPosMode, hydrated } = useReceiptPosMode();
   const requireImage = me?.partner.manual_receipt_require_image ?? true;
   const flowSteps = useMemo(
     () => getFlowSteps(requireImage),
@@ -200,6 +204,17 @@ export default function CreateManualReceiptPage() {
     setCreatedReceiptNumber(null);
     setRewardPoints(0);
     setError(null);
+  };
+
+  const handlePosModeChange = (enabled: boolean) => {
+    setPosMode(enabled);
+    if (!enabled) {
+      setShowScanner(false);
+    }
+  };
+
+  const handleCloseScanner = () => {
+    setShowScanner(false);
   };
 
   const handleLookup = async (
@@ -312,6 +327,54 @@ export default function CreateManualReceiptPage() {
 
   const canContinuePhoto = Boolean(imageBase64) && !lookupLoading;
 
+  if (hydrated && posMode) {
+    return (
+      <>
+        <CreateManualReceiptPosView
+          step={step}
+          member={member}
+          amount={amount}
+          setAmount={setAmount}
+          previewRewardPoints={previewRewardPoints}
+          requireImage={requireImage}
+          imagePreviewUrl={imagePreviewUrl}
+          error={error}
+          lookupLoading={lookupLoading}
+          submitLoading={submitLoading}
+          createdReceiptNumber={createdReceiptNumber}
+          rewardPoints={rewardPoints}
+          amountNumber={amountNumber}
+          canContinuePhoto={canContinuePhoto}
+          onTogglePosMode={handlePosModeChange}
+          onOpenScanner={() => setShowScanner(true)}
+          onImageChange={(event) => void handleImageChange(event)}
+          onContinuePhoto={() => {
+            setError(null);
+            setStep("amount");
+          }}
+          onSubmit={() => void handleSubmit()}
+          onResetFlow={resetFlow}
+          onGoBack={goBack}
+          queryInput={queryInput}
+          onQueryInputChange={setQueryInput}
+          onSearchSubmit={handleSearchSubmit}
+        />
+
+        {showScanner ? (
+          <QrScannerModal
+            onClose={handleCloseScanner}
+            onScan={async (value) => {
+              const result = await handleLookup(value);
+              if (!result.ok) {
+                throw new Error(result.message);
+              }
+            }}
+          />
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-lg flex-col px-4 pb-28 pt-4 md:min-h-0 md:max-w-2xl md:px-8 md:pb-8 md:pt-8">
       {step !== "success" ? (
@@ -346,6 +409,9 @@ export default function CreateManualReceiptPage() {
                   : "ระบุยอดใบเสร็จแล้วบันทึก"}
             </p>
           </div>
+          {hydrated ? (
+            <PosModeSwitch enabled={posMode} onChange={handlePosModeChange} />
+          ) : null}
         </div>
       ) : null}
 
@@ -587,7 +653,7 @@ export default function CreateManualReceiptPage() {
 
       {showScanner ? (
         <QrScannerModal
-          onClose={() => setShowScanner(false)}
+          onClose={handleCloseScanner}
           onScan={async (value) => {
             const result = await handleLookup(value);
             if (!result.ok) {
