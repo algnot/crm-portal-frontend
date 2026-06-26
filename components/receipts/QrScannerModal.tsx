@@ -143,6 +143,7 @@ export default function QrScannerModal({
   const lastScanAtRef = useRef(0);
   const onScanRef = useRef(onScan);
   const isHandlingScanRef = useRef(false);
+  const isMountedRef = useRef(true);
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
@@ -253,11 +254,11 @@ export default function QrScannerModal({
 
                 try {
                   await onScanRef.current(value);
-                  if (!cancelled) {
+                  if (isMountedRef.current) {
                     closeModal();
                   }
                 } catch (lookupError) {
-                  if (!cancelled) {
+                  if (isMountedRef.current) {
                     setStatus("lookup_error");
                     setError(
                       lookupError instanceof Error
@@ -297,7 +298,14 @@ export default function QrScannerModal({
       cancelled = true;
       stopCamera();
     };
-  }, [scanSession, status]);
+  }, [scanSession]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
