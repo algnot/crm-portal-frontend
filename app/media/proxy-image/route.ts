@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_HOST_SUFFIXES = [
   "amazonaws.com",
-  "tongla.dev",
 ];
 
 function isAllowedImageUrl(url: string) {
