@@ -99,7 +99,8 @@ export default function CreateManualReceiptPosView({
 }: CreateManualReceiptPosViewProps) {
   const appendQuickAmount = (value: number) => {
     const current = Number(amount);
-    const next = Number.isNaN(current) || current <= 0 ? value : current + value;
+    const next =
+      Number.isNaN(current) || current <= 0 ? value : current + value;
     setAmount(String(next));
   };
 
@@ -274,7 +275,9 @@ export default function CreateManualReceiptPosView({
             </div>
 
             <div className="rounded-3xl border border-gray-200 bg-white p-5">
-              <p className="text-center text-sm text-gray-100">มูลค่าใบเสร็จ (บาท)</p>
+              <p className="text-center text-sm text-gray-100">
+                มูลค่าใบเสร็จ (บาท)
+              </p>
               <input
                 type="number"
                 min="0"
