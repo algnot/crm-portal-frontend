@@ -115,7 +115,7 @@ export type MemberLookupResponse = {
 export type CreateManualReceiptRequest = {
   user_id: number;
   amount: number;
-  receipt_image: string;
+  receipt_image?: string | false;
 };
 
 export type CreateManualReceiptResponse = {

@@ -8,9 +8,16 @@ export type PortalMeUser = {
   role: PortalRole;
 };
 
+export type PortalMePartner = {
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  manual_receipt_require_image?: boolean;
+};
+
 export type PortalMeResponse = {
   user: PortalMeUser;
-  partner: { name: string; slug: string; logo_url: string | null };
+  partner: PortalMePartner;
 };
 
 export type UpdateMeRequest = {
@@ -30,7 +37,7 @@ export type PortalLoginResponse = {
   token: string;
   expires_at: string;
   user: PortalMeUser;
-  partner: { name: string; slug: string; logo_url: string | null };
+  partner: PortalMePartner;
 };
 
 export type ApiKeyStatus = {

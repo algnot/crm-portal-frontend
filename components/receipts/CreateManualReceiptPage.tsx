@@ -7,6 +7,7 @@ import {
   lookupReceiptMember,
   type ReceiptMember,
 } from "@/services/receipts/receipts";
+import { useApp } from "@/providers/app-provider";
 import { handleError } from "@/utils/errors";
 import { formatNumber, getDefaultPointBalance } from "@/utils/format";
 import { readFileAsBase64 } from "@/utils/file";
@@ -24,11 +25,20 @@ import { useMemo, useState } from "react";
 
 type Step = "member" | "photo" | "amount" | "success";
 
-const STEPS: { key: Exclude<Step, "success">; label: string }[] = [
-  { key: "member", label: "สมาชิก" },
-  { key: "photo", label: "รูปใบเสร็จ" },
-  { key: "amount", label: "ยอดเงิน" },
-];
+type FlowStep = Exclude<Step, "success">;
+
+type FlowStepConfig = { key: FlowStep; label: string };
+
+function getFlowSteps(requireImage: boolean): FlowStepConfig[] {
+  const steps: FlowStepConfig[] = [
+    { key: "member", label: "สมาชิก" },
+  ];
+  if (requireImage) {
+    steps.push({ key: "photo", label: "รูปใบเสร็จ" });
+  }
+  steps.push({ key: "amount", label: "ยอดเงิน" });
+  return steps;
+}
 
 const inputClassName =
   "w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-base outline-none focus:border-brown-100";
@@ -39,17 +49,23 @@ const primaryButtonClassName =
 const secondaryButtonClassName =
   "flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 text-base font-medium text-defualt-text transition hover:bg-gray-10 disabled:cursor-not-allowed disabled:opacity-60";
 
-function StepIndicator({ step }: { step: Step }) {
+function StepIndicator({
+  step,
+  steps,
+}: {
+  step: Step;
+  steps: FlowStepConfig[];
+}) {
   if (step === "success") return null;
 
-  const currentIndex = STEPS.findIndex((item) => item.key === step);
+  const currentIndex = steps.findIndex((item) => item.key === step);
 
   return (
     <div className="mb-6 flex w-full">
-      {STEPS.map((item, index) => {
+      {steps.map((item, index) => {
         const isActive = index === currentIndex;
         const isDone = index < currentIndex;
-        const isLast = index === STEPS.length - 1;
+        const isLast = index === steps.length - 1;
 
         return (
           <div
@@ -138,6 +154,13 @@ function MemberSummary({ member }: { member: ReceiptMember }) {
 }
 
 export default function CreateManualReceiptPage() {
+  const { me } = useApp();
+  const requireImage = me?.partner.manual_receipt_require_image ?? true;
+  const flowSteps = useMemo(
+    () => getFlowSteps(requireImage),
+    [requireImage],
+  );
+
   const [step, setStep] = useState<Step>("member");
   const [queryInput, setQueryInput] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -155,7 +178,8 @@ export default function CreateManualReceiptPage() {
   const [showScanner, setShowScanner] = useState(false);
 
   const amountNumber = Number(amount);
-  const convertPoints = member?.tier?.convert_points ?? 0;
+  const convertPoints =
+    typeof member?.tier === "object" ? member.tier.convert_points : 0;
   const previewRewardPoints = useMemo(
     () =>
       calcRewardPoints(
@@ -192,7 +216,7 @@ export default function CreateManualReceiptPage() {
       const user = await lookupReceiptMember(trimmed);
       setMember(user);
       setQueryInput(trimmed);
-      setStep("photo");
+      setStep(requireImage ? "photo" : "amount");
     } catch (lookupError) {
       setMember(null);
       setError(handleError(lookupError).message);
@@ -236,7 +260,7 @@ export default function CreateManualReceiptPage() {
       setStep("amount");
       return;
     }
-    if (!imageBase64) {
+    if (requireImage && !imageBase64) {
       setError("กรุณาถ่ายรูปใบเสร็จ");
       setStep("photo");
       return;
@@ -249,7 +273,7 @@ export default function CreateManualReceiptPage() {
       const receipt = await createManualReceipt({
         user_id: member.id,
         amount: amountNumber,
-        receipt_image: imageBase64,
+        ...(imageBase64 ? { receipt_image: imageBase64 } : {}),
       });
       setCreatedReceiptNumber(receipt.receipt_number);
       setRewardPoints(receipt.reward_points || previewRewardPoints);
@@ -271,7 +295,12 @@ export default function CreateManualReceiptPage() {
       return;
     }
     if (step === "amount") {
-      setStep("photo");
+      if (requireImage) {
+        setStep("photo");
+        return;
+      }
+      setStep("member");
+      setMember(null);
     }
   };
 
@@ -314,7 +343,7 @@ export default function CreateManualReceiptPage() {
         </div>
       ) : null}
 
-      <StepIndicator step={step} />
+      <StepIndicator step={step} steps={flowSteps} />
 
       {error ? (
         <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-100">
@@ -366,7 +395,7 @@ export default function CreateManualReceiptPage() {
         </div>
       ) : null}
 
-      {step === "photo" && member ? (
+      {step === "photo" && requireImage && member ? (
         <div className="flex flex-1 flex-col gap-5">
           <MemberSummary member={member} />
 
@@ -419,7 +448,7 @@ export default function CreateManualReceiptPage() {
         <div className="flex flex-1 flex-col gap-5">
           <MemberSummary member={member} />
 
-          {imagePreviewUrl ? (
+          {requireImage && imagePreviewUrl ? (
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black/5">
               <img
                 src={imagePreviewUrl}
@@ -500,7 +529,7 @@ export default function CreateManualReceiptPage() {
 
       {step !== "member" && step !== "success" ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
-          {step === "photo" ? (
+          {step === "photo" && requireImage ? (
             <button
               type="button"
               disabled={!canContinuePhoto}
