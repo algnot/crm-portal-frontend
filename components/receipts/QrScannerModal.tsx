@@ -1,22 +1,86 @@
 "use client";
 
 import { X } from "lucide-react";
+import jsQR from "jsqr";
 import { useEffect, useRef, useState } from "react";
 
 const MODAL_EXIT_MS = 250;
+const SCAN_INTERVAL_MS = 250;
 
 type QrScannerModalProps = {
   onClose: () => void;
   onScan: (value: string) => void;
 };
 
+function canUseCamera() {
+  return (
+    typeof window !== "undefined" &&
+    window.isSecureContext &&
+    Boolean(navigator.mediaDevices?.getUserMedia)
+  );
+}
+
+type ScannerEngine =
+  | { type: "barcode-detector"; detector: BarcodeDetector }
+  | { type: "jsqr" };
+
+function createScannerEngine(): ScannerEngine {
+  if ("BarcodeDetector" in window) {
+    return {
+      type: "barcode-detector",
+      detector: new BarcodeDetector({ formats: ["qr_code"] }),
+    };
+  }
+
+  return { type: "jsqr" };
+}
+
+async function detectQrFromVideo(
+  video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+  engine: ScannerEngine,
+) {
+  if (video.readyState < video.HAVE_ENOUGH_DATA) {
+    return null;
+  }
+
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  if (!width || !height) {
+    return null;
+  }
+
+  if (engine.type === "barcode-detector") {
+    const barcodes = await engine.detector.detect(video);
+    return barcodes[0]?.rawValue?.trim() ?? null;
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) {
+    return null;
+  }
+
+  context.drawImage(video, 0, 0, width, height);
+  const imageData = context.getImageData(0, 0, width, height);
+  const result = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "dontInvert",
+  });
+
+  return result?.data?.trim() ?? null;
+}
+
 export default function QrScannerModal({
   onClose,
   onScan,
 }: QrScannerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | null>(null);
+  const lastScanAtRef = useRef(0);
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
@@ -42,10 +106,16 @@ export default function QrScannerModal({
       setIsStarting(true);
       setError(null);
 
-      if (!("BarcodeDetector" in window)) {
-        setError("เบราว์เซอร์นี้ไม่รองรับการสแกน QR กรุณากรอกข้อมูลด้วยตนเอง");
+      if (!canUseCamera()) {
+        setError(
+          "ไม่สามารถเปิดกล้องได้ กรุณาใช้ HTTPS หรือกรอกข้อมูลด้วยตนเอง",
+        );
         setIsStarting(false);
         return;
+      }
+
+      if (!canvasRef.current) {
+        canvasRef.current = document.createElement("canvas");
       }
 
       try {
@@ -67,22 +137,30 @@ export default function QrScannerModal({
         video.srcObject = stream;
         await video.play();
 
-        const detector = new BarcodeDetector({ formats: ["qr_code"] });
+        const scannerEngine = createScannerEngine();
 
         const scanFrame = async () => {
-          if (cancelled || !videoRef.current) return;
+          if (cancelled || !videoRef.current || !canvasRef.current) return;
 
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            const value = barcodes[0]?.rawValue?.trim();
-            if (value) {
-              stopCamera();
-              onScan(value);
-              closeModal();
-              return;
+          const now = performance.now();
+          if (now - lastScanAtRef.current >= SCAN_INTERVAL_MS) {
+            lastScanAtRef.current = now;
+
+            try {
+              const value = await detectQrFromVideo(
+                videoRef.current,
+                canvasRef.current,
+                scannerEngine,
+              );
+              if (value) {
+                stopCamera();
+                onScan(value);
+                closeModal();
+                return;
+              }
+            } catch {
+              // Ignore frame-level detection errors and keep scanning.
             }
-          } catch {
-            // Ignore frame-level detection errors and keep scanning.
           }
 
           animationRef.current = requestAnimationFrame(() => {
@@ -95,7 +173,9 @@ export default function QrScannerModal({
           void scanFrame();
         });
       } catch {
-        setError("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้องหรือกรอกข้อมูลด้วยตนเอง");
+        setError(
+          "ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้องหรือกรอกข้อมูลด้วยตนเอง",
+        );
         setIsStarting(false);
       }
     };
