@@ -5,6 +5,33 @@ export function displayValue(value: string | false | null | undefined) {
   return value;
 }
 
+type UserAddress = {
+  province?: string;
+  district?: string;
+  sub_district?: string;
+  postal_code?: string;
+};
+
+export function formatUserAddress(address: string | false | null | undefined) {
+  if (address === false || address === null || address === undefined || address === "") {
+    return "-";
+  }
+
+  try {
+    const parsed = JSON.parse(address) as UserAddress;
+    const parts = [
+      parsed.sub_district,
+      parsed.district,
+      parsed.province,
+      parsed.postal_code,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(" ") : "-";
+  } catch {
+    return address;
+  }
+}
+
 export function formatNumber(value: number) {
   return new Intl.NumberFormat("th-TH").format(value);
 }

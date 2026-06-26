@@ -148,11 +148,8 @@ export function MemberDetailSkeleton() {
         </section>
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <Skeleton className="h-6 w-28" />
-          <div className="mt-4 space-y-3">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <Skeleton key={index} className="h-16 rounded-xl" />
-            ))}
-          </div>
+          <Skeleton className="mt-4 h-28 rounded-2xl" />
+          <Skeleton className="mt-4 h-14 rounded-xl" />
         </section>
       </div>
       <div className="mt-6 space-y-6">

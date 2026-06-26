@@ -23,6 +23,7 @@ export type PortalUser = {
   is_phone_verified: boolean;
   birth_date: string | false;
   gender: string | false;
+  address: string | false;
   tier: PortalTier;
   points: PortalUserPoint[];
   create_date: string;

@@ -5,10 +5,10 @@ import UserCoupons from "@/components/members/UserCoupons";
 import UserPointHistory from "@/components/members/UserPointHistory";
 import { MemberDetailSkeleton } from "@/components/util/Skeleton";
 import { getUser } from "@/services/members/members";
-import type { PortalUser } from "@/services/members/types";
+import type { PortalUser, PortalUserPoint } from "@/services/members/types";
 import { handleError } from "@/utils/errors";
 import { formatDateTime } from "@/utils/datetime";
-import { displayValue, formatNumber } from "@/utils/format";
+import { displayValue, formatNumber, formatUserAddress } from "@/utils/format";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -139,6 +139,11 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
             <InfoItem label="วันเกิด" value={displayValue(user.birth_date)} />
             <InfoItem label="เพศ" value={displayValue(user.gender)} />
             <InfoItem label="LINE User ID" value={user.line_user_id} />
+            <InfoItem
+              label="ที่อยู่"
+              value={formatUserAddress(user.address)}
+              className="sm:col-span-2"
+            />
           </dl>
         </section>
 
@@ -149,26 +154,7 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
             </h2>
             <AdjustPointModal user={user} onSuccess={handlePointAdjusted} />
           </div>
-          <div className="mt-4 space-y-3">
-            {user.points.map((point) => (
-              <div
-                key={point.currency.id}
-                className="flex items-center justify-between rounded-xl bg-gray-10 px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium text-defualt-text">
-                    {point.currency.name.toUpperCase()}
-                  </p>
-                  {point.currency.is_default ? (
-                    <p className="text-xs text-gray-100">ค่าเริ่มต้น</p>
-                  ) : null}
-                </div>
-                <p className="text-lg font-semibold text-brown-100">
-                  {formatNumber(point.balance)}
-                </p>
-              </div>
-            ))}
-          </div>
+          <PointBalances points={user.points} />
         </section>
       </div>
 
@@ -180,9 +166,66 @@ export default function MemberDetailPage({ userId }: MemberDetailPageProps) {
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
+function PointBalances({ points }: { points: PortalUserPoint[] }) {
+  const primaryPoint =
+    points.find((point) => point.currency.is_default) ?? points[0] ?? null;
+  const secondaryPoints = points.filter((point) => point !== primaryPoint);
+
+  if (!primaryPoint) {
+    return (
+      <p className="mt-4 text-sm text-gray-100">ยังไม่มี Point คงเหลือ</p>
+    );
+  }
+
   return (
-    <div>
+    <div className="mt-4 space-y-4">
+      <div className="rounded-2xl bg-brown-50 px-5 py-5 text-center">
+        <p className="text-sm text-gray-100">
+          {primaryPoint.currency.name}
+          {primaryPoint.currency.is_default ? (
+            <span> · ค่าเริ่มต้น</span>
+          ) : null}
+        </p>
+        <p className="mt-1 text-4xl font-semibold text-brown-100">
+          {formatNumber(primaryPoint.balance)}
+        </p>
+      </div>
+
+      {secondaryPoints.length > 0 ? (
+        <dl className="divide-y divide-gray-200 rounded-xl border border-gray-200">
+          {secondaryPoints.map((point) => (
+            <div
+              key={point.currency.id}
+              className="flex items-center justify-between gap-4 px-4 py-3"
+            >
+              <dt className="text-sm text-gray-100">
+                {point.currency.name}
+                {point.currency.is_total_spending ? (
+                  <span className="mt-0.5 block text-xs">ยอดใช้จ่ายสะสม</span>
+                ) : null}
+              </dt>
+              <dd className="text-base font-semibold text-defualt-text">
+                {formatNumber(point.balance)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </div>
+  );
+}
+
+function InfoItem({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
       <dt className="text-sm text-gray-100">{label}</dt>
       <dd className="mt-1 text-sm font-medium break-all text-defualt-text">
         {value}
