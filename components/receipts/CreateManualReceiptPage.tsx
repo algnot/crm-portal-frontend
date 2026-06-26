@@ -9,7 +9,7 @@ import {
 } from "@/services/receipts/receipts";
 import { useApp } from "@/providers/app-provider";
 import { handleError } from "@/utils/errors";
-import { formatNumber, getDefaultPointBalance } from "@/utils/format";
+import { formatNumber, getDefaultPointBalance, normalizeMemberLookupQuery } from "@/utils/format";
 import { readFileAsBase64 } from "@/utils/file";
 import {
   ArrowLeft,
@@ -203,7 +203,7 @@ export default function CreateManualReceiptPage() {
   };
 
   const handleLookup = async (query: string) => {
-    const trimmed = query.trim();
+    const trimmed = normalizeMemberLookupQuery(query);
     if (!trimmed) {
       setError("กรุณาระบุเบอร์โทร อีเมล หรือ LINE User ID");
       return;

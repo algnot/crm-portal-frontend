@@ -5,6 +5,18 @@ export function displayValue(value: string | false | null | undefined) {
   return value;
 }
 
+const LINE_USER_ID_PATTERN = /U[0-9a-f]{32}/i;
+
+export function normalizeMemberLookupQuery(raw: string) {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+
+  const lineUserId = trimmed.match(LINE_USER_ID_PATTERN)?.[0];
+  if (lineUserId) return lineUserId;
+
+  return trimmed;
+}
+
 type UserAddress = {
   province?: string;
   district?: string;
