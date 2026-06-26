@@ -10,7 +10,7 @@ import type { PortalReceipt, ReceiptState } from "@/services/receipts/types";
 import { formatDateTime } from "@/utils/datetime";
 import { handleError } from "@/utils/errors";
 import { displayValue, formatNumber } from "@/utils/format";
-import { ChevronLeft, ChevronRight, Eye, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -102,16 +102,26 @@ export default function ReceiptsPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="relative w-full md:max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-100" />
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="ค้นหาเลขใบเสร็จ, ชื่อ, LINE ID..."
-            className="w-full rounded-xl border border-gray-200 bg-white py-3 pr-4 pl-10 text-sm outline-none focus:border-brown-100"
-          />
-        </form>
+        <div className="flex w-full flex-col gap-3 md:max-w-xl md:flex-row md:items-center">
+          <form onSubmit={handleSearch} className="relative w-full md:flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-100" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="ค้นหาเลขใบเสร็จ, ชื่อ, LINE ID..."
+              className="w-full rounded-xl border border-gray-200 bg-white py-3 pr-4 pl-10 text-sm outline-none focus:border-brown-100"
+            />
+          </form>
+
+          <Link
+            href="/dashboard/receipts/create"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brown-100 px-4 py-3 text-sm font-medium text-white hover:bg-brown-100/80"
+          >
+            <Plus className="size-4" />
+            เพิ่มใบเสร็จ
+          </Link>
+        </div>
       </div>
 
       {successMessage ? (

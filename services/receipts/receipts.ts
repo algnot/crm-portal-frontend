@@ -1,7 +1,9 @@
 import apiClient from "@/services/api-client";
 import type {
   ApproveReceiptRequest,
-  PortalReceipt,
+  CreateManualReceiptRequest,
+  CreateManualReceiptResponse,
+  MemberLookupResponse,
   ReceiptDetailResponse,
   ReceiptsListParams,
   ReceiptsListResponse,
@@ -73,9 +75,33 @@ export const rejectReceipt = async (
   return res.data.receipt;
 };
 
+export const lookupReceiptMember = async (query: string) => {
+  const res = await apiClient.client.get<MemberLookupResponse>(
+    "/portal/receipts/members/lookup",
+    {
+      params: { q: query },
+      ...mutationConfig,
+    },
+  );
+  return res.data.user;
+};
+
+export const createManualReceipt = async (
+  payload: CreateManualReceiptRequest,
+) => {
+  const res = await apiClient.client.post<CreateManualReceiptResponse>(
+    "/portal/receipts/manual",
+    payload,
+    mutationConfig,
+  );
+  return res.data.receipt;
+};
+
 export type {
   ApproveReceiptRequest,
+  CreateManualReceiptRequest,
   PortalReceipt,
+  ReceiptMember,
   ReceiptsListParams,
   ReceiptState,
   RejectReceiptRequest,
