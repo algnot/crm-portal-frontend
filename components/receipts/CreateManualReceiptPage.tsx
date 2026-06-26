@@ -498,7 +498,7 @@ export default function CreateManualReceiptPage() {
 
       {step === "success" ? (
         <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-green-50 text-green-100">
+          <div className="flex size-20 items-center justify-center rounded-full bg-green-50 text-green-500">
             <CheckCircle2 className="size-10" />
           </div>
           <h2 className="mt-6 text-2xl font-semibold text-defualt-text">
