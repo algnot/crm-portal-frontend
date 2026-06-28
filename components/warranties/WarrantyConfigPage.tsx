@@ -206,28 +206,6 @@ export default function WarrantyConfigPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-defualt-text">
-              สถานะระบบรับประกันสินค้า
-            </p>
-            <p className="mt-1 text-sm text-gray-100">
-              ตั้งค่าเปิด/ปิดได้จาก Odoo backend ที่ Partner → Enable Warranty Registration
-            </p>
-          </div>
-          <span
-            className={`inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-medium ${
-              warrantyEnabled
-                ? "bg-brown-yellow-5 text-brown-100"
-                : "bg-gray-10 text-gray-100"
-            }`}
-          >
-            {warrantyEnabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-          </span>
-        </div>
-      </div>
-
       {error ? (
         <div className="mb-4 rounded-xl bg-red-100/10 px-4 py-3 text-sm text-red-100">
           {error}
