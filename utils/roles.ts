@@ -9,10 +9,13 @@ export const PORTAL_ROLE_LABELS: Record<PortalRole, string> = {
 
 export const PORTAL_ROLE_OPTIONS = [
   { value: "admin" as const, label: "Admin — ทำได้ทุกอย่าง" },
-  { value: "operation" as const, label: "Operation — ตรวจสอบใบเสร็จ" },
+  { value: "operation" as const, label: "Operation — ตรวจสอบใบเสร็จและรับประกัน" },
 ];
 
-const OPERATION_ALLOWED_PREFIXES = ["/dashboard/receipts"];
+const OPERATION_ALLOWED_PREFIXES = [
+  "/dashboard/receipts",
+  "/dashboard/warranties",
+];
 
 export function getUserRole(
   me: PortalMeResponse | null | undefined,

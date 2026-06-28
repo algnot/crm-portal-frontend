@@ -9,6 +9,7 @@ import {
   Menu as MenuIcon,
   QrCode,
   Receipt,
+  ShieldCheck,
   Ticket,
   UserCog,
   Users,
@@ -77,6 +78,12 @@ export default function Menu() {
       path: "/dashboard/receipts",
     },
     {
+      icon: <ShieldCheck className={iconClassName} />,
+      label: "รับประกันสินค้า",
+      path: "/dashboard/warranties",
+      requiresWarranty: true,
+    },
+    {
       icon: <BadgeCheck className={iconClassName} />,
       label: "ระดับสมาชิก",
       path: "/dashboard/tier",
@@ -100,7 +107,16 @@ export default function Menu() {
 
   const visibleMenuItems = useMemo(() => {
     const role = getUserRole(me);
-    return menuItems.filter((item) => canAccessPath(role, item.path));
+    return menuItems.filter((item) => {
+      if (
+        "requiresWarranty" in item &&
+        item.requiresWarranty &&
+        !me?.partner.warranty_enabled
+      ) {
+        return false;
+      }
+      return canAccessPath(role, item.path);
+    });
   }, [me]);
 
   const handleSidebarToggle = () => {

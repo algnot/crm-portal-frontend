@@ -210,6 +210,10 @@ function UiTab({ ui }: { ui: PartnerUi }) {
           label="Custom Fields"
           value={<BooleanBadge value={Boolean(ui.ui_custom_fields)} />}
         />
+        <InfoItem
+          label="ระบบรับประกันสินค้า"
+          value={<BooleanBadge value={Boolean(ui.warranty_enabled)} />}
+        />
       </dl>
 
       <div>

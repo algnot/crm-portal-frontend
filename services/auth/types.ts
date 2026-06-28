@@ -13,6 +13,7 @@ export type PortalMePartner = {
   slug: string;
   logo_url: string | null;
   manual_receipt_require_image?: boolean;
+  warranty_enabled?: boolean;
 };
 
 export type PortalMeResponse = {

@@ -20,6 +20,7 @@ export type PartnerUi = {
   crm_required_phone: boolean;
   crm_required_email: boolean;
   ui_custom_fields: boolean | false;
+  warranty_enabled?: boolean;
 };
 
 export type PartnerAd = {
