@@ -63,7 +63,9 @@ export default function WarrantyConfigPage() {
       setProducts(config.products ?? []);
       setContributors(config.contributors ?? []);
       setStatuses(config.statuses ?? []);
-      setWarrantyEnabled(config.enabled ?? me?.partner.warranty_enabled ?? false);
+      setWarrantyEnabled(
+        config.enabled ?? me?.partner.warranty_enabled ?? false,
+      );
     } catch (loadError) {
       setError(handleError(loadError).message);
     } finally {
@@ -127,7 +129,8 @@ export default function WarrantyConfigPage() {
       if (editTarget.type === "product") {
         const payload = {
           name: String(formData.get("name") || "").trim(),
-          description: String(formData.get("description") || "").trim() || undefined,
+          description:
+            String(formData.get("description") || "").trim() || undefined,
           sku: String(formData.get("sku") || "").trim() || undefined,
           cost_price: Number(formData.get("cost_price") || 0),
           sell_price: Number(formData.get("sell_price") || 0),
@@ -401,7 +404,10 @@ function ConfigTable({
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <tr key={index} className="border-b border-gray-200 last:border-b-0">
+            <tr
+              key={index}
+              className="border-b border-gray-200 last:border-b-0"
+            >
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className="px-3 py-3 text-defualt-text">
                   {cell}
@@ -431,11 +437,11 @@ function RowActions({
           icon: <Pencil className="size-4" />,
           onClick: onEdit,
         },
-        {
-          label: "ลบ",
-          icon: <Trash2 className="size-4" />,
-          onClick: onDelete,
-        },
+        // {
+        //   label: "ลบ",
+        //   icon: <Trash2 className="size-4" />,
+        //   onClick: onDelete,
+        // },
       ]}
     />
   );
@@ -445,13 +451,7 @@ function EmptyState({ text }: { text: string }) {
   return <p className="text-sm text-gray-100">{text}</p>;
 }
 
-function ProductImage({
-  src,
-  alt,
-}: {
-  src?: string | false;
-  alt: string;
-}) {
+function ProductImage({ src, alt }: { src?: string | false; alt: string }) {
   const imageUrl = getProxiedImageUrl(src);
   if (!imageUrl) {
     return (
@@ -530,7 +530,9 @@ function EditModal({
                     className="block w-full text-sm text-gray-100 file:mr-4 file:rounded-4xl file:border-0 file:bg-brown-yellow-5 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brown-100"
                   />
                   {productImageFilename ? (
-                    <p className="text-xs text-gray-100">{productImageFilename}</p>
+                    <p className="text-xs text-gray-100">
+                      {productImageFilename}
+                    </p>
                   ) : null}
                 </div>
               </FormField>
@@ -545,9 +547,7 @@ function EditModal({
               <FormField label="SKU">
                 <input
                   name="sku"
-                  defaultValue={
-                    target.item?.sku ? String(target.item.sku) : ""
-                  }
+                  defaultValue={target.item?.sku ? String(target.item.sku) : ""}
                   className={inputClassName}
                 />
               </FormField>
